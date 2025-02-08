@@ -143,7 +143,7 @@ const addOrganizerContactDetails = async ({id , mobileNumber, alternativeMobileN
     try{
         // 1.check organizer is exist or not
         let organizer = await organizerModel.findById(id);
-        appErrorAssert(organizer,statusCodes.NOT_FOUND,"Organizer is not found.");
+        appErrorAssert(organizer,statusCodes.NOT_FOUND,"Organizer not found.");
 
         // 2.update contact details and second step 
         organizer.mobileNumber = mobileNumber
@@ -162,12 +162,33 @@ const addOrganizerContactDetails = async ({id , mobileNumber, alternativeMobileN
         throw new AppError(statusCode, message);
     }
 }
+type payloadType = {
+    FirstName:string,
+    LastName:string,
+    dob:Date,
+    gender:string,
+    profession:string
+}
 
-const addOrganizerProfileDetails = async (id : string,payload)=>{
+const addOrganizerProfileDetails = async (id : string,payload:payloadType)=>{
     try{
         // 1.check organizer is exist or not
+        let organizer = await organizerModel.findById(id);
+        appErrorAssert(organizer,statusCodes.NOT_FOUND,"Organizer not found.");
+
         // 2.update organizer profile
+        organizer.FirstName = payload.FirstName;
+        organizer.LastName = payload.LastName;
+        organizer.dob = payload.dob;
+        organizer.gender = payload.gender;
+        organizer.profession = payload.profession;
+        organizer.steps.third = true;
+        organizer = await organizer.save();
+
         // 3. return organizer
+        return {
+            organizer : organizer.omitPassword()
+        }
     }catch(error)
     {
         const { message, statusCode } = catchErrorMsgAndStatusCode(error);
@@ -179,7 +200,8 @@ const registerService = {
     sentOtpToEmail,
     verifyEmailOtp,
     createOrganizeAccount,
-    addOrganizerContactDetails
+    addOrganizerContactDetails,
+    addOrganizerProfileDetails
 }
 
 export default registerService;
