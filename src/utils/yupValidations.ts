@@ -2,6 +2,8 @@ import yup from "yup";
 
 const emailValidate = yup.string().email('Invalid email format').required('Email is required');
 
+const ObjectIdSchema = yup.string().required("id is required").matches(/^[0-9a-fA-F]{24}$/, "pass a valid id as ObjectId.");
+
 const emailOtpVerifySchema = yup.object({
     otp_number: yup.number().required("otp_number is required").min(6, "OTP must be 6 digits Only."),
     otp_reference: yup.string().required("otp_reference is required")
@@ -15,13 +17,13 @@ const createOrganizerSchema = yup.object({
 });
 
 const addContactDetailsSchema = yup.object({
-    id: yup.string().required("id is required").matches(/^[0-9a-fA-F]{24}$/, "pass a valid id as ObjectId."),
+    id: ObjectIdSchema,
     mobileNumber: yup.string().required("mobileNumber is required").matches(/^\+[1-9]\d{1,14}$/, "Enter a valid mobileNumber."),
     alternativeMobileNumber: yup.string().required("alternativeMobileNumber is required").matches(/^\+[1-9]\d{1,14}$/, "Enter a valid alternativeMobileNumber."),
 });
 
 const addProfileDetailsSchema = yup.object({
-    id: yup.string().required("id is required").matches(/^[0-9a-fA-F]{24}$/, "pass a valid id as ObjectId."),
+    id: ObjectIdSchema,
     firstName: yup.string().required('firstName is required').min(1, "firstName must be at least 1 character"),
     lastName: yup.string().required('lastName is required').min(1, "lastName must be at least 1 character"),
     gender: yup.string().required('gender is required'),
@@ -29,11 +31,21 @@ const addProfileDetailsSchema = yup.object({
     profession: yup.string().required("profession is required.")
 });
 
+const addLocationDetailsSchema = yup.object({
+    id: ObjectIdSchema,
+    address: yup.string().required('address is required').min(3, "address must be at least 3 characters"),
+    pinCode: yup.string().required('pinCode is required').min(6, "pinCode must be at least 6 characters").max(10,"pinCode must be not more then 10 characters."),
+    city: yup.string().required("city is required.").min(3,"city must be at least 3 characters."),
+    state: yup.string().required("state is required.").min(3,"state must be at least 3 characters."),
+    country: yup.string().required("country is required.").min(3,"country must be at least 3 characters."),
+    userAgent: yup.string().required("userAgent is missing.")
+});
 
 export {
     emailValidate,
     emailOtpVerifySchema,
     createOrganizerSchema,
     addContactDetailsSchema,
-    addProfileDetailsSchema
+    addProfileDetailsSchema,
+    addLocationDetailsSchema
 }

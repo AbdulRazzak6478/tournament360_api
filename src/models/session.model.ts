@@ -1,19 +1,19 @@
-// import { thirtyDaysFromNow } from '../utils/dateHandlers';
 import mongoose, { Document } from "mongoose";
+import { thirtyDaysFromNow } from "../utils/dateHandlers.js";
 
 export interface SessionDocument extends Document {
-    userId: mongoose.Types.ObjectId,
+    userMongoId: mongoose.Types.ObjectId,
     userAgent?: string,
     createdAt: Date,
     expiresAt: Date
 }
 
 const sessionSchema = new mongoose.Schema<SessionDocument>({
-    userId: { type: mongoose.Schema.Types.ObjectId, index: true, ref: "Organizer" },
-    userAgent: { type: String },
-    createdAt: { type: Date, required: true, default: Date.now() },
-    // expiresAt: { type: Date, default: thirtyDaysFromNow() }
-    expiresAt: { type: Date, default: null }
+    userMongoId: { type: mongoose.Schema.Types.ObjectId, index: true, ref: "Organizer" },
+    userAgent: { type: String, default:""},
+    createdAt: { type: Date, default: new Date() },
+    expiresAt: { type: Date, default: thirtyDaysFromNow() }
+    // expiresAt: { type: Date, default: null }
 });
 
 const sessionModel = mongoose.model<SessionDocument>("session", sessionSchema);

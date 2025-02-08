@@ -2,9 +2,10 @@ import { ValidationError } from "yup";
 import statusCodes from "../constants/statusCodes.js";
 import catchAsync from "../utils/catchAsync.js";
 import { failed_response, success_response } from "../utils/response.js";
-import { addContactDetailsSchema, addProfileDetailsSchema, createOrganizerSchema, emailOtpVerifySchema, emailValidate } from "../utils/yupValidations.js";
+import { addContactDetailsSchema, addLocationDetailsSchema, addProfileDetailsSchema, createOrganizerSchema, emailOtpVerifySchema, emailValidate } from "../utils/yupValidations.js";
 import registerService from "../service/register-service.js";
 import catchErrorMsgAndStatusCode from "../utils/catchError.js";
+import { setAuthCookies } from "../utils/cookies.js";
 
 const sentOtpToVerifyEmail = catchAsync(async (req, res) => {
     try {
@@ -33,7 +34,7 @@ const sentOtpToVerifyEmail = catchAsync(async (req, res) => {
 
 const verifyEmailOTP = catchAsync(async (req, res) => {
     try {
-        console.log("req.body : ",req.body);
+        console.log("req.body : ", req.body);
         // 1.validate otp and reference id
         try {
             await emailOtpVerifySchema.validate(req.body, { abortEarly: false });
@@ -48,7 +49,7 @@ const verifyEmailOTP = catchAsync(async (req, res) => {
         // 3. return response
         return res.status(statusCodes.OK).json(success_response(statusCodes.OK, "OTP is Verified", result, true));
     } catch (error) {
-        console.log("Error in verify email otp controller : ",error);
+        console.log("Error in verify email otp controller : ", error);
         const { statusCode, message } = catchErrorMsgAndStatusCode(error);
         return res.status(statusCode).json(failed_response(statusCode, "failed to verify email OTP", { message: message }, false))
     }
@@ -76,8 +77,8 @@ const createOrganizer = catchAsync(async (req, res) => {
     }
 });
 
-const addContactDetails = catchAsync(async (req,res)=>{
-    try{
+const addContactDetails = catchAsync(async (req, res) => {
+    try {
         // 1.validate request contact details
         try {
             await addContactDetailsSchema.validate({ ...req.body }, { abortEarly: false });
@@ -89,23 +90,22 @@ const addContactDetails = catchAsync(async (req,res)=>{
         }
         // 2.call service
         const payload = {
-            id : req.body.id,
-            mobileNumber : req.body.mobileNumber,
-            alternativeMobileNumber : req.body.alternativeMobileNumber
+            id: req.body.id,
+            mobileNumber: req.body.mobileNumber,
+            alternativeMobileNumber: req.body.alternativeMobileNumber
         }
         const result = await registerService.addOrganizerContactDetails(payload)
         // 3.return response;
-        return res.status(statusCodes.OK).json(success_response(statusCodes.OK,"Contact Details Added.",result,true))
-    }catch(error)
-    {
+        return res.status(statusCodes.OK).json(success_response(statusCodes.OK, "Contact Details Added.", result, true))
+    } catch (error) {
         const { statusCode, message } = catchErrorMsgAndStatusCode(error);
         return res.status(statusCode).json(failed_response(statusCode, "failed to add contact details", { message: message }, false))
     }
 
 });
 
-const addProfileDetails = catchAsync(async (req,res)=>{
-    try{
+const addProfileDetails = catchAsync(async (req, res) => {
+    try {
         // 1.validate request contact details
         try {
             await addProfileDetailsSchema.validate({ ...req.body }, { abortEarly: false });
@@ -119,42 +119,60 @@ const addProfileDetails = catchAsync(async (req,res)=>{
         const payload = {
             FirstName: req.body.firstName,
             LastName: req.body.lastName,
-            dob:req.body.dob,
-            gender:req.body.gender,
-            profession:req.body.profession
+            dob: req.body.dob,
+            gender: req.body.gender,
+            profession: req.body.profession
         }
-        const result = await registerService.addOrganizerProfileDetails(req.body.id,payload)
+        const result = await registerService.addOrganizerProfileDetails(req.body.id, payload)
         // 3.return response;
-        return res.status(statusCodes.OK).json(success_response(statusCodes.OK,"Profile Details Added.",result,true))
-    }catch(error)
-    {
+        return res.status(statusCodes.OK).json(success_response(statusCodes.OK, "Profile Details Added.", result, true))
+    } catch (error) {
         const { statusCode, message } = catchErrorMsgAndStatusCode(error);
-        console.log("error in add organizer profile details controller : ",message);
+        console.log("error in add organizer profile details controller : ", message);
         return res.status(statusCode).json(failed_response(statusCode, "failed to add profile details", { message: message }, false))
     }
-    
+
 });
 
 
-const addLocationDetails = catchAsync(async (req,res)=>{
-    try{
+const addLocationDetails = catchAsync(async (req, res) => {
+    try {
         // 1. validate location request
+        try {
+            await addLocationDetailsSchema.validate({ ...req.body, userAgent: req.headers["user-agent"] }, { abortEarly: false });
+        } catch (error) {
+            if (error instanceof ValidationError) {
+                console.log("Yup validation error in add organizer profile details : ", error?.message);
+                return res.status(statusCodes.BAD_REQUEST).json(failed_response(statusCodes.BAD_REQUEST, "Yup validation failed", { error: error?.errors }, false));
+            }
+        }
         // 2.call the service
-        // 3. return response
-    }catch(error)
-    {
+        const payload = {
+            address: req.body.address,
+            pinCode: req.body.pinCode,
+            city: req.body.city,
+            state: req.body.state,
+            country: req.body.country,
+            userAgent: req.headers['user-agent'] || ""
+        }
+        const { refreshToken, accessToken, organizer } = await registerService.addOrganizerLocationDetails(req.body.id, payload);
+
+        // 3. return response with tokens into cookies
+        return setAuthCookies({ res, accessToken, refreshToken }).status(statusCodes.CREATED).json(success_response(statusCodes.CREATED, "Location details added", { organizer, message: "All steps are completed." }, true));
+    } catch (error) {
         const { statusCode, message } = catchErrorMsgAndStatusCode(error);
-        console.log("error in add organizer location details controller : ",message);
+        console.log("error in add organizer location details controller : ", message);
         return res.status(statusCode).json(failed_response(statusCode, "failed to add location details", { message: message }, false))
     }
-})
+});
 
 const registerController = {
     sentOtpToVerifyEmail,
     verifyEmailOTP,
     createOrganizer,
     addContactDetails,
-    addProfileDetails
+    addProfileDetails,
+    addLocationDetails
 }
 
 export default registerController;

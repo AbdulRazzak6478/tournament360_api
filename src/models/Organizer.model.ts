@@ -4,11 +4,11 @@ import mongoose, { Document, Model, Schema } from "mongoose";
 // Note : keep remove user instance after 15 minutes
 // Note : remove tournaments after 30 days
 
-export interface locationDocument extends Document {
+export interface locationDocument {
     address: string;
     city: string;
     state: string;
-    pinCode: number;
+    pinCode: string;
     country: string;
 }
 
