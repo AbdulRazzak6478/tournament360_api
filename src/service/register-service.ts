@@ -133,10 +133,53 @@ const createOrganizeAccount = async (referenceID:string,email:string,password:st
         throw new AppError(statusCode, message);
     }
 }
+
+type contactType = {
+    id : string,
+    mobileNumber: string,
+    alternativeMobileNumber:string
+}
+const addOrganizerContactDetails = async ({id , mobileNumber, alternativeMobileNumber} :contactType)=>{
+    try{
+        // 1.check organizer is exist or not
+        let organizer = await organizerModel.findById(id);
+        appErrorAssert(organizer,statusCodes.NOT_FOUND,"Organizer is not found.");
+
+        // 2.update contact details and second step 
+        organizer.mobileNumber = mobileNumber
+        organizer.alternativeMobile = alternativeMobileNumber
+        organizer.steps.second = true;
+        organizer = await organizer.save();
+
+        // 3.return data
+        return {
+            organizer :organizer.omitPassword()
+        }
+    }catch(error)
+    {
+        const { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        console.log("error in add contact details service :", message);
+        throw new AppError(statusCode, message);
+    }
+}
+
+const addOrganizerProfileDetails = async (id : string,payload)=>{
+    try{
+        // 1.check organizer is exist or not
+        // 2.update organizer profile
+        // 3. return organizer
+    }catch(error)
+    {
+        const { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        console.log("error in add profile details service :", message);
+        throw new AppError(statusCode, message);
+    }
+}
 const registerService = {
     sentOtpToEmail,
     verifyEmailOtp,
-    createOrganizeAccount
+    createOrganizeAccount,
+    addOrganizerContactDetails
 }
 
 export default registerService;

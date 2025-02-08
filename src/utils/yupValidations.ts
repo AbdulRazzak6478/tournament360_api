@@ -14,8 +14,15 @@ const createOrganizerSchema = yup.object({
     userAgent: yup.string().optional()
 });
 
+const addContactDetailsSchema = yup.object({
+    id: yup.string().required("id is required").matches(/^[0-9a-fA-F]{24}$/, "pass a valid id as ObjectId."),
+    mobileNumber: yup.string().required("mobileNumber is required").matches(/^\+[1-9]\d{1,14}$/, "Enter a valid mobileNumber."),
+    alternativeMobileNumber: yup.string().required("alternativeMobileNumber is required").matches(/^\+[1-9]\d{1,14}$/, "Enter a valid alternativeMobileNumber."),
+});
+
 export {
     emailValidate,
     emailOtpVerifySchema,
-    createOrganizerSchema
+    createOrganizerSchema,
+    addContactDetailsSchema
 }

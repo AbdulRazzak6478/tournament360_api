@@ -2,7 +2,7 @@ import { ValidationError } from "yup";
 import statusCodes from "../constants/statusCodes.js";
 import catchAsync from "../utils/catchAsync.js";
 import { failed_response, success_response } from "../utils/response.js";
-import { createOrganizerSchema, emailOtpVerifySchema, emailValidate } from "../utils/yupValidations.js";
+import { addContactDetailsSchema, createOrganizerSchema, emailOtpVerifySchema, emailValidate } from "../utils/yupValidations.js";
 import registerService from "../service/register-service.js";
 import catchErrorMsgAndStatusCode from "../utils/catchError.js";
 
@@ -74,7 +74,29 @@ const createOrganizer = catchAsync(async (req, res) => {
         const { statusCode, message } = catchErrorMsgAndStatusCode(error);
         return res.status(statusCode).json(failed_response(statusCode, "failed to create Account", { message: message }, false))
     }
-})
+});
+
+const addContactDetails = catchAsync(async (req,res)=>{
+    try{
+        // 1.validate request contact details
+        try {
+            await addContactDetailsSchema.validate({ ...req.body }, { abortEarly: false });
+        } catch (error) {
+            if (error instanceof ValidationError) {
+                console.log("Yup validation error in add organizer contact details : ", error?.message);
+                return res.status(statusCodes.BAD_REQUEST).json(failed_response(statusCodes.BAD_REQUEST, "Yup validation failed", { error: error?.errors }, false));
+            }
+        }
+        // 2.call service
+        
+        // 3.return response;
+    }catch(error)
+    {
+        const { statusCode, message } = catchErrorMsgAndStatusCode(error);
+        return res.status(statusCode).json(failed_response(statusCode, "failed to add contact details", { message: message }, false))
+    }
+
+});
 
 const registerController = {
     sentOtpToVerifyEmail,
