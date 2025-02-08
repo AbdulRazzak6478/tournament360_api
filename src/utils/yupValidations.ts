@@ -41,11 +41,17 @@ const addLocationDetailsSchema = yup.object({
     userAgent: yup.string().required("userAgent is missing.")
 });
 
+const loginSchema = yup.object({
+    email:yup.string().email('Invalid email format').required('email is required'),
+    password:yup.string().required("password is required.").min(8,'password must be at least 8 characters.'),
+});
+
 export {
     emailValidate,
     emailOtpVerifySchema,
     createOrganizerSchema,
     addContactDetailsSchema,
     addProfileDetailsSchema,
-    addLocationDetailsSchema
+    addLocationDetailsSchema,
+    loginSchema
 }

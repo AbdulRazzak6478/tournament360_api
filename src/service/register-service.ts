@@ -204,6 +204,7 @@ type locationPayloadType = {
     country: string,
     userAgent: string,
 }
+
 const addOrganizerLocationDetails = async (id: string, payload: locationPayloadType) => {
     try {
         // 1.check the organizer is exist or not
@@ -257,13 +258,58 @@ const addOrganizerLocationDetails = async (id: string, payload: locationPayloadT
         throw new AppError(statusCode, message);
     }
 }
+
+const checkIsSignedUp = async (email:string)=>{
+    try{
+        // 1. check the email exist or not
+        const organizer = await organizerModel.findOne({email:email});
+        appErrorAssert(organizer,statusCodes.NOT_FOUND,"email is not registered");
+
+        // 2.check signedUp or not 
+        appErrorAssert(organizer.steps.fourth,statusCodes.BAD_REQUEST,"Please complete sign up first");
+
+        // return result
+        return {
+            signedUp : true,
+            organizer: organizer.omitPassword()
+        }
+    }catch(error)
+    {
+        const { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        console.log("error in check is signedUp service :", message);
+        throw new AppError(statusCode, message);
+    }
+}
+
+const loginService = async(email:string,password:string)=>{
+
+    // make a global user collection
+    // id with dynamic ref, userRole,name,email,isSignedUp
+
+
+    // make a model
+    // update in verify email otp
+    // create account , update instance
+    // check isSignedUp service too
+    try{
+        //1.
+
+    }catch(error)
+    {
+        const { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        console.log("error in login service :", message);
+        throw new AppError(statusCode, message);
+    }
+}
+
 const registerService = {
     sentOtpToEmail,
     verifyEmailOtp,
     createOrganizeAccount,
     addOrganizerContactDetails,
     addOrganizerProfileDetails,
-    addOrganizerLocationDetails
+    addOrganizerLocationDetails,
+    checkIsSignedUp
 }
 
 export default registerService;

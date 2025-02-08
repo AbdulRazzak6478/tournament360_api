@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import InfoController from '../controllers/infoController.js';
-import v1Routes from "./v1/index.js"
+import v1Routes from "./v1/organizer.routes.js"
 
 const router = Router();
 //test it
