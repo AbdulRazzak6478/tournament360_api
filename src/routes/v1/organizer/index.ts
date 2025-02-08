@@ -13,13 +13,13 @@ router.post("/register/verify-email-otp",registerController.verifyEmailOTP);
 router.post("/register/create",registerController.createOrganizer);
 
 // add contact details
-router.post("/register/add-Contact");
+router.post("/register/add-Contact",registerController.addContactDetails);
 
 // add profile details
-router.post("/register/add-profile");
+router.post("/register/add-profile",registerController.addProfileDetails);
 
 // add location 
-router.post("/register/add-location");
+router.post("/register/add-location",registerController.addLocationDetails);
 
 
 

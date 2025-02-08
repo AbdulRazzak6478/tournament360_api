@@ -221,6 +221,8 @@ const addOrganizerLocationDetails = async (id: string, payload: locationPayloadT
         organizer.location = location;
         organizer.perDayLimit = 3;
         organizer.isVerified = true;
+        organizer.status = "ACTIVE"
+        organizer.steps.fourth = true;
         
         // 3.create a session for organizer
         const sessionPayload = {
