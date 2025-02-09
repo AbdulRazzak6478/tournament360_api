@@ -85,14 +85,23 @@ const sentOtpEmailVerifyTemplate = (OTP: number, email: string) => {
 const sentLoginVerifyOTPTemplate = (OTP:number,name:string)=>{
       return `
             <p>Dear ${name}, </p>
-            <p>Your login Verify OTP is : ${OTP}
+            <p>Your login Verify OTP is : <b>${OTP} </b> </p>
 
 
-            <h1>Tournament360 </p>
+            <h1>Tournament360</h1> 
+      `;
+}
+const sentResetOTPEmailTemplate = (OTP:number,email:string)=>{
+      return `
+            <p>Dear ${email}, </p>
+            <p>Your Reset Password OTP is : <b>${OTP} </b> </p>
+
+            <h1>Tournament360</h1>
       `;
 }
 
 export  {
     sentOtpEmailVerifyTemplate,
     sentLoginVerifyOTPTemplate,
+    sentResetOTPEmailTemplate
 }

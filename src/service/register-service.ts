@@ -9,7 +9,7 @@ import appErrorAssert from "../utils/appAssert.js";
 import AppError from "../utils/appError.js";
 import catchErrorMsgAndStatusCode from "../utils/catchError.js";
 import { OneMinuteFromNow, thirtyDaysFromNow } from "../utils/dateHandlers.js";
-import { sendOtpVerifyEmail, sentLoginVerifyOTP, sentWelcomeEmail } from "../utils/sentEmail.js";
+import { sendOtpVerifyEmail, sentLoginVerifyOTP, sentResetOTPEmail, sentWelcomeEmail } from "../utils/sentEmail.js";
 import { generateCustomID, generateOTP, generateUniqueReferenceID } from "../utils/uniqueIDs.js";
 import sessionModel from "../models/session.model.js";
 import GlobalUserModel from '../models/globalUsers.model.js';
@@ -458,6 +458,42 @@ const refreshUserAccessToken = async (refreshToken: string) => {
     }
 }
 
+const sentResetOTPService = async (email: string) => {
+    try {
+        // 1.validate user exist or not
+        const platformUser = await GlobalUserModel.findOne({ email: email });
+        appErrorAssert(platformUser, statusCodes.BAD_REQUEST, "User not found.");
+
+        // 2.create otp reference
+        const OTP = generateOTP();
+        const referenceID = generateUniqueReferenceID();
+
+        const data = {
+            type: verificationCodeType.PasswordReset,
+            email,
+            otp_reference: referenceID,
+            otp_number: OTP,
+            expiresIn: OneMinuteFromNow() // 1 minute from now
+        }
+        console.log("reset otp payload : ", data);
+        const otpReference = await OtpModel.create(data);
+        appErrorAssert(otpReference, statusCodes.BAD_REQUEST, "Not able to add reset otp reference.");
+        console.log("otpReference : ", otpReference);
+
+        // 3.sent reset otp to mail
+        await sentResetOTPEmail(OTP, email);
+
+        // 4.return otp reference
+        return {
+            referenceID
+        }
+    } catch (error) {
+        const { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        console.log("error in sent reset otp service :", message);
+        throw new AppError(statusCode, message);
+    }
+}
+
 const registerService = {
     sentOtpToEmail,
     verifyEmailOtp,
@@ -468,7 +504,8 @@ const registerService = {
     checkIsSignedUp,
     loginService,
     loginOtpVerifyService,
-    refreshUserAccessToken
+    refreshUserAccessToken,
+    sentResetOTPService
 }
 
 export default registerService;

@@ -587,6 +587,85 @@ const refreshHandler = catchAsync(async (req, res) => {
                 )
             );
     }
+});
+
+const sentResetPasswordOTP = catchAsync(async (req, res) => {
+    try {
+        // 1.validate email
+        try {
+            await emailValidate.validate(req.body.email);
+        } catch (error) {
+            if (error instanceof ValidationError) {
+                console.log("Yup validation error in verify email: ", error?.message);
+                return res
+                    .status(statusCodes.BAD_REQUEST)
+                    .json(
+                        failed_response(
+                            statusCodes.BAD_REQUEST,
+                            "Yup validation failed",
+                            { error: error?.message },
+                            false
+                        )
+                    );
+            }
+        }
+
+        // 2.call the reset service
+        const response = await registerService.sentResetOTPService(req.body.email);
+        // 3.return response
+        return res.status(statusCodes.CREATED).json(success_response(statusCodes.CREATED, "Reset OTP is sent.", response, true));
+    } catch (error) {
+        let { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        return res
+            .status(statusCode)
+            .json(
+                failed_response(
+                    statusCode,
+                    "failed to sent reset OTP",
+                    { message },
+                    false
+                )
+            );
+    }
+});
+
+const verifyResetPasswordOTP = catchAsync(async (req,res)=>{
+    try{
+        // 1.validate otp and reference id
+        try {
+            await emailOtpVerifySchema.validate({ ...req.body, userAgent: req.headers['user-agent'] }, { abortEarly: false });
+        } catch (error) {
+            if (error instanceof ValidationError) {
+                console.log("Yup validation error in verify reset password otp : ", error?.message);
+                return res
+                    .status(statusCodes.BAD_REQUEST)
+                    .json(
+                        failed_response(
+                            statusCodes.BAD_REQUEST,
+                            "Yup validation failed",
+                            { error: error?.errors },
+                            false
+                        )
+                    );
+            }
+        }
+        // 2. call the service
+        
+        // 3. return referenceID
+    }catch(error)
+    {
+        let { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        return res
+            .status(statusCode)
+            .json(
+                failed_response(
+                    statusCode,
+                    "failed to verify reset OTP",
+                    { message },
+                    false
+                )
+            );
+    }
 })
 
 const registerController = {
@@ -600,7 +679,8 @@ const registerController = {
     login,
     loginOTPVerify,
     logout,
-    refreshHandler
+    refreshHandler,
+    sentResetPasswordOTP
 };
 
 export default registerController;

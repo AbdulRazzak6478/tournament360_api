@@ -242,3 +242,31 @@ export const sentLoginVerifyOTP = async (email:string,name:string,otp:number) =>
         }
     }
 }
+export const sentResetOTPEmail = async (otp:number,email:string,) => {
+    const sender = {
+        email: "abdulrazzak4186@gmail.com",
+        name: "Tournament360",
+    };
+
+    // const receiver = [{ email: 'armanshoaib391@gmail.com' }];
+    // const receiver = [{ email: email,name:name }];
+    const receiver = [{ email: email }];
+
+    try {
+        const response = await emailApi.sendTransacEmail({
+            sender,
+            to: receiver,
+            subject: "Reset Password OTP for Tournament360",
+            htmlContent : sentLoginVerifyOTPTemplate(otp,email)
+        });
+        console.log('Email sent:', response);
+        return response;
+    } catch (error) {
+        console.log('Error:', error);
+        if (error instanceof Error) {
+            throw new AppError(statusCodes.BAD_REQUEST, error?.message);
+        } else {
+            throw error;
+        }
+    }
+}
