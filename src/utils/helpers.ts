@@ -1,4 +1,6 @@
 import bcrypt from 'bcryptjs';
+import catchErrorMsgAndStatusCode from './catchError.js';
+import AppError from './appError.js';
 
 
 
@@ -13,10 +15,20 @@ export async function comparePassword(password: string, hash: string): Promise<b
         const match = await bcrypt.compare(password, hash);
         return match;
     } catch (error) {
-        if(error instanceof Error)
-        {
-            console.log("Error in compare password : ",error?.message);
+        if (error instanceof Error) {
+            console.log("Error in compare password : ", error?.message);
             throw new Error(error?.message);
         }
+    }
+}
+
+export async function hashPassword(password:string) {
+    try {
+        const salt = await bcrypt.genSalt(10);
+        const hashPassword = await bcrypt.hash(password, salt); // Directly use 'this'
+        return hashPassword;
+    } catch (error: unknown) {
+        const { statusCode, message } = catchErrorMsgAndStatusCode(error);
+        throw new AppError(statusCode,message);
     }
 }

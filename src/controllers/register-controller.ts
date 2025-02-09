@@ -10,6 +10,7 @@ import {
     emailOtpVerifySchema,
     emailValidate,
     loginSchema,
+    resetPasswordSchema,
 } from "../utils/yupValidations.js";
 import registerService from "../service/register-service.js";
 import catchErrorMsgAndStatusCode from "../utils/catchError.js";
@@ -74,7 +75,10 @@ const verifyEmailOTP = catchAsync(async (req, res) => {
         console.log("req.body : ", req.body);
         // 1.validate otp and reference id
         try {
-            await emailOtpVerifySchema.validate({ ...req.body, userAgent: req.headers['user-agent'] }, { abortEarly: false });
+            await emailOtpVerifySchema.validate(
+                { ...req.body, userAgent: req.headers["user-agent"] },
+                { abortEarly: false }
+            );
         } catch (error) {
             if (error instanceof ValidationError) {
                 console.log("Yup validation error in verify email: ", error?.message);
@@ -443,7 +447,16 @@ const login = catchAsync(async (req, res) => {
         const response = await registerService.loginService(email, password);
 
         // 3.return response
-        return res.status(statusCodes.CREATED).json(success_response(statusCodes.CREATED, "Login OTP is Sent.", response, true));
+        return res
+            .status(statusCodes.CREATED)
+            .json(
+                success_response(
+                    statusCodes.CREATED,
+                    "Login OTP is Sent.",
+                    response,
+                    true
+                )
+            );
     } catch (error) {
         const { statusCode, message } = catchErrorMsgAndStatusCode(error);
         console.log("error in login controller : ", message);
@@ -464,7 +477,10 @@ const loginOTPVerify = catchAsync(async (req, res) => {
     try {
         // 1.validate login otp request
         try {
-            await emailOtpVerifySchema.validate({ ...req.body, userAgent: req.headers['user-agent'] }, { abortEarly: false });
+            await emailOtpVerifySchema.validate(
+                { ...req.body, userAgent: req.headers["user-agent"] },
+                { abortEarly: false }
+            );
         } catch (error) {
             if (error instanceof ValidationError) {
                 console.log(
@@ -486,8 +502,13 @@ const loginOTPVerify = catchAsync(async (req, res) => {
 
         // 2.call the service
         const { otp_number, otp_reference } = req.body;
-        const userAgent = req.headers['user-agent'] || "";
-        const { user, accessToken, refreshToken } = await registerService.loginOtpVerifyService(otp_number, otp_reference, userAgent);
+        const userAgent = req.headers["user-agent"] || "";
+        const { user, accessToken, refreshToken } =
+            await registerService.loginOtpVerifyService(
+                otp_number,
+                otp_reference,
+                userAgent
+            );
 
         // 3.return with tokens and cookies
 
@@ -506,7 +527,6 @@ const loginOTPVerify = catchAsync(async (req, res) => {
                     true
                 )
             );
-
     } catch (error) {
         const { statusCode, message } = catchErrorMsgAndStatusCode(error);
         console.log("error in login otp verify controller : ", message);
@@ -543,7 +563,6 @@ const logout = catchAsync(async (req, res) => {
                 )
             );
     } catch (error) {
-
         let { message, statusCode } = catchErrorMsgAndStatusCode(error);
         return res
             .status(statusCode)
@@ -561,19 +580,26 @@ const logout = catchAsync(async (req, res) => {
 const refreshHandler = catchAsync(async (req, res) => {
     try {
         const refreshToken = req.cookies.refreshToken as string | undefined;
-        appErrorAssert(refreshToken, statusCodes.BAD_REQUEST, "refreshToken is missing");
+        appErrorAssert(
+            refreshToken,
+            statusCodes.BAD_REQUEST,
+            "refreshToken is missing"
+        );
 
-        const { accessToken, newRefreshToken } = await registerService.refreshUserAccessToken(refreshToken);
+        const { accessToken, newRefreshToken } =
+            await registerService.refreshUserAccessToken(refreshToken);
 
         // send tokens in response
         return setAuthCookies({ res, accessToken, refreshToken: newRefreshToken })
             .status(statusCodes.OK)
-            .json(success_response(
-                statusCodes.OK,
-                "User Refresh Token Successfully",
-                { message: "Refresh token successfully" },
-                true
-            ));
+            .json(
+                success_response(
+                    statusCodes.OK,
+                    "User Refresh Token Successfully",
+                    { message: "Refresh token successfully" },
+                    true
+                )
+            );
     } catch (error) {
         let { message, statusCode } = catchErrorMsgAndStatusCode(error);
         return res
@@ -613,7 +639,16 @@ const sentResetPasswordOTP = catchAsync(async (req, res) => {
         // 2.call the reset service
         const response = await registerService.sentResetOTPService(req.body.email);
         // 3.return response
-        return res.status(statusCodes.CREATED).json(success_response(statusCodes.CREATED, "Reset OTP is sent.", response, true));
+        return res
+            .status(statusCodes.CREATED)
+            .json(
+                success_response(
+                    statusCodes.CREATED,
+                    "Reset OTP is sent.",
+                    response,
+                    true
+                )
+            );
     } catch (error) {
         let { message, statusCode } = catchErrorMsgAndStatusCode(error);
         return res
@@ -629,14 +664,20 @@ const sentResetPasswordOTP = catchAsync(async (req, res) => {
     }
 });
 
-const verifyResetPasswordOTP = catchAsync(async (req,res)=>{
-    try{
+const verifyResetPasswordOTP = catchAsync(async (req, res) => {
+    try {
         // 1.validate otp and reference id
         try {
-            await emailOtpVerifySchema.validate({ ...req.body, userAgent: req.headers['user-agent'] }, { abortEarly: false });
+            await emailOtpVerifySchema.validate(
+                { ...req.body, userAgent: req.headers["user-agent"] },
+                { abortEarly: false }
+            );
         } catch (error) {
             if (error instanceof ValidationError) {
-                console.log("Yup validation error in verify reset password otp : ", error?.message);
+                console.log(
+                    "Yup validation error in verify reset password otp : ",
+                    error?.message
+                );
                 return res
                     .status(statusCodes.BAD_REQUEST)
                     .json(
@@ -650,10 +691,25 @@ const verifyResetPasswordOTP = catchAsync(async (req,res)=>{
             }
         }
         // 2. call the service
-        
+        const { otp_number, otp_reference } = req.body;
+
+        const response = await registerService.verifyResetPasswordOTPService(
+            otp_number,
+            otp_reference
+        );
+
         // 3. return referenceID
-    }catch(error)
-    {
+        return res
+            .status(statusCodes.OK)
+            .json(
+                success_response(
+                    statusCodes.OK,
+                    "Reset password OTP is Verified.",
+                    response,
+                    true
+                )
+            );
+    } catch (error) {
         let { message, statusCode } = catchErrorMsgAndStatusCode(error);
         return res
             .status(statusCode)
@@ -666,7 +722,63 @@ const verifyResetPasswordOTP = catchAsync(async (req,res)=>{
                 )
             );
     }
-})
+});
+
+const resetPasswordUpdate = catchAsync(async (req, res) => {
+    try {
+        // 1.validate request data
+        try {
+            await resetPasswordSchema.validate(req.body, { abortEarly: false });
+        } catch (error) {
+            if (error instanceof ValidationError) {
+                console.log(
+                    "Yup validation error in verify reset password otp : ",
+                    error?.message
+                );
+                return res
+                    .status(statusCodes.BAD_REQUEST)
+                    .json(
+                        failed_response(
+                            statusCodes.BAD_REQUEST,
+                            "Yup validation failed",
+                            { error: error?.errors },
+                            false
+                        )
+                    );
+            }
+        }
+        // 2.call the update password service
+        const { password, referenceID } = req.body;
+        const response = await registerService.resetPasswordService(
+            password,
+            referenceID
+        );
+
+        // 3.return response
+        return res
+            .status(statusCodes.OK)
+            .json(
+                success_response(
+                    statusCodes.OK,
+                    "Password is Updated Successfully.",
+                    response,
+                    true
+                )
+            );
+    } catch (error) {
+        let { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        return res
+            .status(statusCode)
+            .json(
+                failed_response(
+                    statusCode,
+                    "failed to reset password",
+                    { message },
+                    false
+                )
+            );
+    }
+});
 
 const registerController = {
     sentOtpToVerifyEmail,
@@ -680,7 +792,9 @@ const registerController = {
     loginOTPVerify,
     logout,
     refreshHandler,
-    sentResetPasswordOTP
+    sentResetPasswordOTP,
+    verifyResetPasswordOTP,
+    resetPasswordUpdate,
 };
 
 export default registerController;

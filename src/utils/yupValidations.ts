@@ -46,6 +46,10 @@ const loginSchema = yup.object({
     email:yup.string().email('Invalid email format').required('email is required'),
     password:yup.string().required("password is required.").min(8,'password must be at least 8 characters.'),
 });
+const resetPasswordSchema = yup.object({
+    referenceID: yup.string().required("referenceID is required"),
+    password:yup.string().required("password is required.").min(8,'password must be at least 8 characters.'),
+});
 
 export {
     emailValidate,
@@ -54,5 +58,6 @@ export {
     addContactDetailsSchema,
     addProfileDetailsSchema,
     addLocationDetailsSchema,
-    loginSchema
+    loginSchema,
+    resetPasswordSchema
 }

@@ -13,7 +13,7 @@ import { sendOtpVerifyEmail, sentLoginVerifyOTP, sentResetOTPEmail, sentWelcomeE
 import { generateCustomID, generateOTP, generateUniqueReferenceID } from "../utils/uniqueIDs.js";
 import sessionModel from "../models/session.model.js";
 import GlobalUserModel from '../models/globalUsers.model.js';
-import { comparePassword } from '../utils/helpers.js';
+import { comparePassword, hashPassword } from '../utils/helpers.js';
 
 const sentOtpToEmail = async (email: string) => {
     try {
@@ -494,6 +494,65 @@ const sentResetOTPService = async (email: string) => {
     }
 }
 
+const verifyResetPasswordOTPService = async (otp: number, referenceID: string) => {
+    try {
+        // 1.check otp reference and verify it
+        const otpPayload = {
+            type: verificationCodeType.PasswordReset,
+            otp_number: otp,
+            otp_reference: referenceID
+        }
+        let otpReference = await OtpModel.findOne(otpPayload);
+        appErrorAssert(otpReference, statusCodes.NOT_FOUND, "otp reference not found.");
+        const isOtpValid = otpReference.expiresIn > new Date();
+        appErrorAssert(isOtpValid, statusCodes.BAD_REQUEST, "OTP is Expired.");
+        otpReference.isVerified = true;
+        otpReference = await otpReference.save();
+
+        // 2.return otp reference
+        return {
+            referenceID
+        }
+    } catch (error) {
+        const { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        console.log("error in verify reset otp service :", message);
+        throw new AppError(statusCode, message);
+    }
+}
+
+const resetPasswordService = async (password: string, referenceID: string) => {
+    try {
+        // 1.check reference is exist and verified or not
+        const otpPayload = {
+            type: verificationCodeType.PasswordReset,
+            otp_reference: referenceID
+        }
+        const otpReference = await OtpModel.findOne(otpPayload);
+        appErrorAssert(otpReference, statusCodes.NOT_FOUND, "OTP reference not found.");
+
+        appErrorAssert(otpReference?.isVerified, statusCodes.BAD_REQUEST, "Verify email first.");
+
+        // 2.hash the password 
+        const hash = await hashPassword(password);
+
+        // 3.update password in the user details
+        let user = await GlobalUserModel.findOne({ email: otpReference?.email }).populate('userMongoId');
+        appErrorAssert(user, statusCodes.NOT_FOUND, 'User not found.');
+        let platformUser = (user.userMongoId as unknown) as OrganizerDocument;
+        platformUser.password = hash;
+        platformUser.totalNoOfPasswordReset = platformUser.totalNoOfPasswordReset + 1;
+        platformUser = await platformUser.save();
+
+        return {
+            user: platformUser
+        }
+    } catch (error) {
+        const { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        console.log("error in reset password service :", message);
+        throw new AppError(statusCode, message);
+    }
+}
+
 const registerService = {
     sentOtpToEmail,
     verifyEmailOtp,
@@ -505,7 +564,9 @@ const registerService = {
     loginService,
     loginOtpVerifyService,
     refreshUserAccessToken,
-    sentResetOTPService
+    sentResetOTPService,
+    verifyResetPasswordOTPService,
+    resetPasswordService
 }
 
 export default registerService;

@@ -7,29 +7,29 @@ const router = Router();
 
 // 1. Login flow ---- two step verification
 // login 1st step : check credentials
-router.post('/login',registerController.login)
+router.post('/login', registerController.login)
 
 // login 2nd step : verify email otp
-router.post('/login-otp',registerController.loginOTPVerify);
+router.post('/login-otp', registerController.loginOTPVerify);
 
 // *********************************************************************************************
 
 // 2.Logout user
-router.post("/logout",registerController.logout);
+router.post("/logout", registerController.logout);
 
 // **************************************************************************************
 
 // 3.refresh accessToken
-router.post('/refresh',registerController.refreshHandler);
+router.post('/refresh', registerController.refreshHandler);
 
 // 4. Reset Password || forgot password
 // send otp to reset password request
-router.post('/send-reset-otp');
+router.post('/send-reset-otp', registerController.sentResetPasswordOTP);
 
 // verify reset password otp
-router.post('/verify-reset-otp');
+router.post('/verify-reset-otp', registerController.verifyResetPasswordOTP);
 
 // reset password update 
-router.post('/reset-password')
+router.post('/reset-password', registerController.resetPasswordUpdate)
 
 export default router;
