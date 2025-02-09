@@ -12,6 +12,7 @@ import { OneMinuteFromNow } from "../utils/dateHandlers.js";
 import { sendOtpVerifyEmail, sentWelcomeEmail } from "../utils/sentEmail.js";
 import { generateCustomID, generateOTP, generateUniqueReferenceID } from "../utils/uniqueIDs.js";
 import sessionModel from "../models/session.model.js";
+import GlobalUserModel from '../models/globalUsers.model.js';
 
 const sentOtpToEmail = async (email: string) => {
     try {
@@ -64,6 +65,9 @@ const verifyEmailOtp = async (Otp: number, referenceID: string) => {
         await otpReference.save();
 
         // 2.validate user if exist 
+        const user = await GlobalUserModel.findOne({ email: otpReference.email });
+        appErrorAssert(!user?.isSignedUp, statusCodes.BAD_REQUEST, "Email is already exist. Please Login");
+        
         const organizer = await organizerModel.findOne({ email: otpReference.email });
         appErrorAssert(!organizer?.steps.fourth, statusCodes.BAD_REQUEST, "Email is already exist. Please Login");
 
@@ -98,8 +102,12 @@ const createOrganizeAccount = async (referenceID: string, email: string, passwor
         appErrorAssert(otpReference?.isVerified, statusCodes.BAD_REQUEST, "Please verify your email first.");
 
         // 2.validate email account is exist or not
+        const user = await GlobalUserModel.findOne({ email: otpReference.email });
+        appErrorAssert(!user, statusCodes.BAD_REQUEST, "Password is already set.");
+       
         const organizer = await organizerModel.findOne({ email: email });
         appErrorAssert(!organizer, statusCodes.BAD_REQUEST, "Password is already set.");
+
         // 3.generate Organizer custom id and make payload
         const customID = await generateCustomID();
         const organizerObj = {
@@ -124,8 +132,20 @@ const createOrganizeAccount = async (referenceID: string, email: string, passwor
         createAccount.userRole = userRole?._id as mongoose.Schema.Types.ObjectId;
         createAccount = await createAccount.save();
 
+        const globalUserObj={
+            userMongoId : createAccount?._id,
+            userRole : createAccount?.userRole,
+            name: ``,
+            email:createAccount?.email,
+            isSignedUp: false,
+            designationRef : 'Organizer'
+        }
+        const globalUser = await GlobalUserModel.create(globalUserObj);
+        appErrorAssert(globalUser, statusCodes.BAD_REQUEST, "Not able to create platform user.");
+
         // 6.sent welcome mail
         await sentWelcomeEmail(email);
+
         // 7.return user
         return { user: createAccount.omitPassword() }
     } catch (error) {
@@ -143,6 +163,9 @@ type contactType = {
 const addOrganizerContactDetails = async ({ id, mobileNumber, alternativeMobileNumber }: contactType) => {
     try {
         // 1.check organizer is exist or not
+        const user = await GlobalUserModel.findOne({ userMongoId: id });
+        appErrorAssert(user, statusCodes.NOT_FOUND, "User not found.");
+       
         let organizer = await organizerModel.findById(id);
         appErrorAssert(organizer, statusCodes.NOT_FOUND, "Organizer not found.");
 
@@ -173,6 +196,9 @@ type payloadType = {
 const addOrganizerProfileDetails = async (id: string, payload: payloadType) => {
     try {
         // 1.check organizer is exist or not
+        let user = await GlobalUserModel.findOne({ userMongoId: id });
+        appErrorAssert(user, statusCodes.NOT_FOUND, "User not found.");
+       
         let organizer = await organizerModel.findById(id);
         appErrorAssert(organizer, statusCodes.NOT_FOUND, "Organizer not found.");
 
@@ -184,6 +210,9 @@ const addOrganizerProfileDetails = async (id: string, payload: payloadType) => {
         organizer.profession = payload.profession;
         organizer.steps.third = true;
         organizer = await organizer.save();
+
+        user.name = `${payload.FirstName} ${payload.LastName}`;
+        user = await user.save();
 
         // 3. return organizer
         return {
@@ -208,6 +237,9 @@ type locationPayloadType = {
 const addOrganizerLocationDetails = async (id: string, payload: locationPayloadType) => {
     try {
         // 1.check the organizer is exist or not
+        let user = await GlobalUserModel.findOne({ userMongoId: id });
+        appErrorAssert(user, statusCodes.NOT_FOUND, "User not found.");
+       
         let organizer = await organizerModel.findById(id);
         appErrorAssert(organizer, statusCodes.NOT_FOUND, "Organizer Not Found.");
 
@@ -246,6 +278,9 @@ const addOrganizerLocationDetails = async (id: string, payload: locationPayloadT
         );
         organizer = await organizer.save();
 
+        user.isSignedUp = true;
+        user = await user.save();
+
         // 5.set the tokens into cookies and return data
         return {
             refreshToken,
@@ -262,6 +297,9 @@ const addOrganizerLocationDetails = async (id: string, payload: locationPayloadT
 const checkIsSignedUp = async (email:string)=>{
     try{
         // 1. check the email exist or not
+        let user = await GlobalUserModel.findOne({ email: email });
+        appErrorAssert(user, statusCodes.NOT_FOUND, "User not found.");
+       
         const organizer = await organizerModel.findOne({email:email});
         appErrorAssert(organizer,statusCodes.NOT_FOUND,"email is not registered");
 
