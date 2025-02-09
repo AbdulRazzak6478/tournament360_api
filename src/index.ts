@@ -5,6 +5,7 @@ import env from './constants/env.js';
 import apiRoutes from "./routes/index.js"
 import authRoutes from "./routes/auth.routes.js"
 import { connectDB } from './config/database.js';
+import cookieParser from 'cookie-parser';
 
 
 
@@ -22,6 +23,7 @@ const corsOptions: CorsOptions = {
         }
     }
 };
+app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

@@ -22,6 +22,8 @@ router.post("/logout", registerController.logout);
 // 3.refresh accessToken
 router.post('/refresh', registerController.refreshHandler);
 
+// *****************************************************************************************
+
 // 4. Reset Password || forgot password
 // send otp to reset password request
 router.post('/send-reset-otp', registerController.sentResetPasswordOTP);
@@ -30,6 +32,9 @@ router.post('/send-reset-otp', registerController.sentResetPasswordOTP);
 router.post('/verify-reset-otp', registerController.verifyResetPasswordOTP);
 
 // reset password update 
-router.post('/reset-password', registerController.resetPasswordUpdate)
+router.post('/reset-password', registerController.resetPasswordUpdate);
+
+// *****************************************************************************************
+
 
 export default router;

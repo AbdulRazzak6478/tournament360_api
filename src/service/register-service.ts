@@ -13,7 +13,7 @@ import { sendOtpVerifyEmail, sentLoginVerifyOTP, sentResetOTPEmail, sentWelcomeE
 import { generateCustomID, generateOTP, generateUniqueReferenceID } from "../utils/uniqueIDs.js";
 import sessionModel from "../models/session.model.js";
 import GlobalUserModel from '../models/globalUsers.model.js';
-import { comparePassword, hashPassword } from '../utils/helpers.js';
+import { comparePassword } from '../utils/helpers.js';
 
 const sentOtpToEmail = async (email: string) => {
     try {
@@ -329,7 +329,8 @@ const loginService = async (email: string, password: string) => {
 
         // 2.compare passwords
         const platformUser = (user?.userMongoId as unknown) as OrganizerDocument;
-        appErrorAssert(comparePassword(password, platformUser.password), statusCodes.BAD_REQUEST, "Password is incorrect. Please try again.");
+        console.log("password compare : ", await comparePassword(password, platformUser.password), password, platformUser.password);
+        appErrorAssert(await comparePassword(password, platformUser.password), statusCodes.BAD_REQUEST, "Password is incorrect. Please try again.");
 
         // 3.generate OTP and referenceID
         const OTP = generateOTP();
@@ -533,13 +534,13 @@ const resetPasswordService = async (password: string, referenceID: string) => {
         appErrorAssert(otpReference?.isVerified, statusCodes.BAD_REQUEST, "Verify email first.");
 
         // 2.hash the password 
-        const hash = await hashPassword(password);
+        // const hash = await hashPassword(password);
 
         // 3.update password in the user details
         let user = await GlobalUserModel.findOne({ email: otpReference?.email }).populate('userMongoId');
         appErrorAssert(user, statusCodes.NOT_FOUND, 'User not found.');
         let platformUser = (user.userMongoId as unknown) as OrganizerDocument;
-        platformUser.password = hash;
+        platformUser.password = password;
         platformUser.totalNoOfPasswordReset = platformUser.totalNoOfPasswordReset + 1;
         platformUser = await platformUser.save();
 

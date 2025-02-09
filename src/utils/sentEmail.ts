@@ -140,7 +140,7 @@ export const sendEmail = async (toEmail: string, toName: string, subject: string
         };
 
         const response = await emailApi.sendTransacEmail(emailData);
-        console.log("Email sent successfully:", response);
+        // console.log("Email sent successfully:", response);
         return response;
     } catch (error) {
         console.error("Error sending email:", error);
@@ -168,7 +168,7 @@ export const sendOtpVerifyEmail = async (otp:number,email:string) => {
             },
             htmlContent : sentOtpEmailVerifyTemplate(otp,email)
         });
-        console.log('Email sent:', response);
+        // console.log('Email sent:', response);
         return response;
     } catch (error) {
         console.log('Error:', error);
@@ -198,7 +198,7 @@ export const sentWelcomeEmail = async (email:string) => {
             <p>Completed your profile and proceed to create tournaments in our platform</p> </p>
             `
         });
-        console.log('Email sent:', response);
+        // console.log('Email sent:', response);
         return response;
     } catch (error) {
         console.log('Error:', error);
@@ -231,7 +231,7 @@ export const sentLoginVerifyOTP = async (email:string,name:string,otp:number) =>
             },
             htmlContent : sentLoginVerifyOTPTemplate(otp,email)
         });
-        console.log('Email sent:', response);
+        // console.log('Email sent:', response);
         return response;
     } catch (error) {
         console.log('Error:', error);
@@ -259,7 +259,7 @@ export const sentResetOTPEmail = async (otp:number,email:string,) => {
             subject: "Reset Password OTP for Tournament360",
             htmlContent : sentLoginVerifyOTPTemplate(otp,email)
         });
-        console.log('Email sent:', response);
+        // console.log('Email sent:', response);
         return response;
     } catch (error) {
         console.log('Error:', error);
