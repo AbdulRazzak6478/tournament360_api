@@ -68,7 +68,7 @@ const verifyEmailOtp = async (Otp: number, referenceID: string) => {
         // 2.validate user if exist 
         const user = await GlobalUserModel.findOne({ email: otpReference.email });
         appErrorAssert(!user?.isSignedUp, statusCodes.BAD_REQUEST, "Email is already exist. Please Login");
-        
+
         const organizer = await organizerModel.findOne({ email: otpReference.email });
         appErrorAssert(!organizer?.steps.fourth, statusCodes.BAD_REQUEST, "Email is already exist. Please Login");
 
@@ -105,7 +105,7 @@ const createOrganizeAccount = async (referenceID: string, email: string, passwor
         // 2.validate email account is exist or not
         const user = await GlobalUserModel.findOne({ email: otpReference.email });
         appErrorAssert(!user, statusCodes.BAD_REQUEST, "Password is already set.");
-       
+
         const organizer = await organizerModel.findOne({ email: email });
         appErrorAssert(!organizer, statusCodes.BAD_REQUEST, "Password is already set.");
 
@@ -133,13 +133,13 @@ const createOrganizeAccount = async (referenceID: string, email: string, passwor
         createAccount.userRole = userRole?._id as mongoose.Schema.Types.ObjectId;
         createAccount = await createAccount.save();
 
-        const globalUserObj={
-            userMongoId : createAccount?._id,
-            userRole : createAccount?.userRole,
+        const globalUserObj = {
+            userMongoId: createAccount?._id,
+            userRole: createAccount?.userRole,
             name: ``,
-            email:createAccount?.email,
+            email: createAccount?.email,
             isSignedUp: false,
-            designationRef : 'Organizer'
+            designationRef: 'Organizer'
         }
         const globalUser = await GlobalUserModel.create(globalUserObj);
         appErrorAssert(globalUser, statusCodes.BAD_REQUEST, "Not able to create platform user.");
@@ -166,7 +166,7 @@ const addOrganizerContactDetails = async ({ id, mobileNumber, alternativeMobileN
         // 1.check organizer is exist or not
         const user = await GlobalUserModel.findOne({ userMongoId: id });
         appErrorAssert(user, statusCodes.NOT_FOUND, "User not found.");
-       
+
         let organizer = await organizerModel.findById(id);
         appErrorAssert(organizer, statusCodes.NOT_FOUND, "Organizer not found.");
 
@@ -199,7 +199,7 @@ const addOrganizerProfileDetails = async (id: string, payload: payloadType) => {
         // 1.check organizer is exist or not
         let user = await GlobalUserModel.findOne({ userMongoId: id });
         appErrorAssert(user, statusCodes.NOT_FOUND, "User not found.");
-       
+
         let organizer = await organizerModel.findById(id);
         appErrorAssert(organizer, statusCodes.NOT_FOUND, "Organizer not found.");
 
@@ -240,12 +240,12 @@ const addOrganizerLocationDetails = async (id: string, payload: locationPayloadT
         // 1.check the organizer is exist or not
         let user = await GlobalUserModel.findOne({ userMongoId: id });
         appErrorAssert(user, statusCodes.NOT_FOUND, "User not found.");
-       
+
         let organizer = await organizerModel.findById(id);
         appErrorAssert(organizer, statusCodes.NOT_FOUND, "Organizer Not Found.");
 
         // 2.update the location of organizer
-        const location:locationDocument = {
+        const location: locationDocument = {
             address: payload.address,
             pinCode: payload.pinCode,
             city: payload.city,
@@ -257,24 +257,24 @@ const addOrganizerLocationDetails = async (id: string, payload: locationPayloadT
         organizer.isVerified = true;
         organizer.status = "ACTIVE"
         organizer.steps.fourth = true;
-        
+
         // 3.create a session for organizer
         const sessionPayload = {
-            userMongoId : organizer?._id,
-            userAgent : payload.userAgent
+            userMongoId: organizer?._id,
+            userAgent: payload.userAgent
         }
         let organizerSession = await sessionModel.create(sessionPayload);
-        appErrorAssert(organizerSession,statusCodes.BAD_REQUEST,"not able to create organizer session.");
-        
+        appErrorAssert(organizerSession, statusCodes.BAD_REQUEST, "not able to create organizer session.");
+
         // 4.generate refresh and access token for organizer
         const refreshToken = signToken(
-            { sessionId : organizerSession?._id},
+            { sessionId: organizerSession?._id },
             refreshTokenOptions
         );
         const accessToken = signToken(
             {
-                userId : organizer?._id as mongoose.Schema.Types.ObjectId,
-                sessionId : organizerSession._id,
+                userId: organizer?._id as mongoose.Schema.Types.ObjectId,
+                sessionId: organizerSession._id,
             }
         );
         organizer = await organizer.save();
@@ -295,43 +295,42 @@ const addOrganizerLocationDetails = async (id: string, payload: locationPayloadT
     }
 }
 
-const checkIsSignedUp = async (email:string)=>{
-    try{
+const checkIsSignedUp = async (email: string) => {
+    try {
         // 1. check the email exist or not
         let user = await GlobalUserModel.findOne({ email: email });
         appErrorAssert(user, statusCodes.NOT_FOUND, "User not found.");
-       
-        const organizer = await organizerModel.findOne({email:email});
-        appErrorAssert(organizer,statusCodes.NOT_FOUND,"email is not registered");
+
+        const organizer = await organizerModel.findOne({ email: email });
+        appErrorAssert(organizer, statusCodes.NOT_FOUND, "email is not registered");
 
         // 2.check signedUp or not 
-        appErrorAssert(organizer.steps.fourth,statusCodes.BAD_REQUEST,"Please complete sign up first");
+        appErrorAssert(organizer.steps.fourth, statusCodes.BAD_REQUEST, "Please complete sign up first");
 
         // return result
         return {
-            signedUp : true,
+            signedUp: true,
             organizer: organizer.omitPassword()
         }
-    }catch(error)
-    {
+    } catch (error) {
         const { message, statusCode } = catchErrorMsgAndStatusCode(error);
         console.log("error in check is signedUp service :", message);
         throw new AppError(statusCode, message);
     }
 }
 
-const loginService = async(email:string,password:string)=>{
+const loginService = async (email: string, password: string) => {
 
-    try{
+    try {
         // 1.check user is exist or not
-        const user = await GlobalUserModel.findOne({email : email}).populate('userMongoId');
-        appErrorAssert(user,statusCodes.NOT_FOUND,"email is not registered."); 
-        appErrorAssert(user?.userMongoId,statusCodes.NOT_FOUND,'user not found.');
+        const user = await GlobalUserModel.findOne({ email: email }).populate('userMongoId');
+        appErrorAssert(user, statusCodes.NOT_FOUND, "email is not registered.");
+        appErrorAssert(user?.userMongoId, statusCodes.NOT_FOUND, 'user not found.');
 
         // 2.compare passwords
         const platformUser = (user?.userMongoId as unknown) as OrganizerDocument;
         appErrorAssert(comparePassword(password, platformUser.password), statusCodes.BAD_REQUEST, "Password is incorrect. Please try again.");
-        
+
         // 3.generate OTP and referenceID
         const OTP = generateOTP();
         const referenceID = generateUniqueReferenceID();
@@ -346,22 +345,77 @@ const loginService = async(email:string,password:string)=>{
         }
         console.log("login otp payload : ", data);
         const otpReference = await OtpModel.create(data);
-        appErrorAssert(otpReference,statusCodes.BAD_REQUEST,"Not able to add otp reference.");
+        appErrorAssert(otpReference, statusCodes.BAD_REQUEST, "Not able to add otp reference.");
         console.log("otpReference : ", otpReference);
 
         // 5.sent login verify otp
         const name = user?.name || email;
-        await sentLoginVerifyOTP(email,name,OTP);
+        await sentLoginVerifyOTP(email, name, OTP);
 
         // return referenceID
         return {
             referenceID
         }
 
-    }catch(error)
-    {
+    } catch (error) {
         const { message, statusCode } = catchErrorMsgAndStatusCode(error);
         console.log("error in login service :", message);
+        throw new AppError(statusCode, message);
+    }
+}
+
+const loginOtpVerifyService = async (otp: number, referenceID: string, userAgent: string) => {
+    try {
+        // 1.verify otp reference 
+        const otpPayload = {
+            type: verificationCodeType.LoginVerification,
+            otp_number: otp,
+            otp_reference: referenceID
+        }
+        let otpReference = await OtpModel.findOne(otpPayload);
+        appErrorAssert(otpReference, statusCodes.NOT_FOUND, "OTP reference not found");
+
+        const isOtpValid = otpReference?.expiresIn > new Date();
+        appErrorAssert(isOtpValid, statusCodes.BAD_REQUEST, "OTP is Expired.");
+        otpReference.isVerified = true;
+        otpReference = await otpReference.save();
+
+        // 2.check user is signedUp or not 
+        let user = await GlobalUserModel.findOne({ email: otpReference?.email }).populate("userMongoId");
+        appErrorAssert(user, statusCodes.NOT_FOUND, "User not found.");
+        appErrorAssert(user?.isSignedUp, statusCodes.UNAUTHORIZED, "Completed Your sign up first.");
+
+        const platformUser = (user?.userMongoId as unknown) as OrganizerDocument;
+
+        // 3.remove user all sessions and create a new session
+        await sessionModel.deleteMany({ userMongoId: platformUser?._id });
+        const sessionPayload = {
+            userMongoId: platformUser?._id,
+            userAgent: userAgent
+        }
+        let organizerSession = await sessionModel.create(sessionPayload);
+        appErrorAssert(organizerSession, statusCodes.BAD_REQUEST, "not able to create user session.");
+
+        // 4.generate refresh and access token for user
+        const refreshToken = signToken(
+            { sessionId: organizerSession?._id },
+            refreshTokenOptions
+        );
+        const accessToken = signToken(
+            {
+                userId: platformUser?._id as mongoose.Schema.Types.ObjectId,
+                sessionId: organizerSession._id,
+            }
+        );
+        // 5.return result 
+        return {
+            user: platformUser,
+            accessToken,
+            refreshToken
+        }
+    } catch (error) {
+        const { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        console.log("error in login otp verify service :", message);
         throw new AppError(statusCode, message);
     }
 }
@@ -374,7 +428,8 @@ const registerService = {
     addOrganizerProfileDetails,
     addOrganizerLocationDetails,
     checkIsSignedUp,
-    loginService
+    loginService,
+    loginOtpVerifyService
 }
 
 export default registerService;

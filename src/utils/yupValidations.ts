@@ -6,7 +6,8 @@ const ObjectIdSchema = yup.string().required("id is required").matches(/^[0-9a-f
 
 const emailOtpVerifySchema = yup.object({
     otp_number: yup.number().required("otp_number is required").min(6, "OTP must be 6 digits Only."),
-    otp_reference: yup.string().required("otp_reference is required")
+    otp_reference: yup.string().required("otp_reference is required"),
+    userAgent : yup.string().required("userAgent is missing.")
 });
 
 const createOrganizerSchema = yup.object({

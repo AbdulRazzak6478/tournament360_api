@@ -13,7 +13,9 @@ import {
 } from "../utils/yupValidations.js";
 import registerService from "../service/register-service.js";
 import catchErrorMsgAndStatusCode from "../utils/catchError.js";
-import { setAuthCookies } from "../utils/cookies.js";
+import { clearAuthCookies, setAuthCookies } from "../utils/cookies.js";
+import sessionModel from "../models/session.model.js";
+import { verifyToken } from "../utils/jwt.js";
 
 const sentOtpToVerifyEmail = catchAsync(async (req, res) => {
     try {
@@ -71,7 +73,7 @@ const verifyEmailOTP = catchAsync(async (req, res) => {
         console.log("req.body : ", req.body);
         // 1.validate otp and reference id
         try {
-            await emailOtpVerifySchema.validate(req.body, { abortEarly: false });
+            await emailOtpVerifySchema.validate({ ...req.body, userAgent: req.headers['user-agent'] }, { abortEarly: false });
         } catch (error) {
             if (error instanceof ValidationError) {
                 console.log("Yup validation error in verify email: ", error?.message);
@@ -449,13 +451,113 @@ const login = catchAsync(async (req, res) => {
             .json(
                 failed_response(
                     statusCode,
-                    "failed to login Organizer",
+                    "failed to login user",
                     { message: message },
                     false
                 )
             );
     }
-})
+});
+
+const loginOTPVerify = catchAsync(async (req, res) => {
+    try {
+        // 1.validate login otp request
+        try {
+            await emailOtpVerifySchema.validate({ ...req.body, userAgent: req.headers['user-agent'] }, { abortEarly: false });
+        } catch (error) {
+            if (error instanceof ValidationError) {
+                console.log(
+                    "Yup validation error in login otp Verify controller : ",
+                    error?.message
+                );
+                return res
+                    .status(statusCodes.BAD_REQUEST)
+                    .json(
+                        failed_response(
+                            statusCodes.BAD_REQUEST,
+                            "Yup validation failed",
+                            { error: error?.errors },
+                            false
+                        )
+                    );
+            }
+        }
+
+        // 2.call the service
+        const { otp_number, otp_reference } = req.body;
+        const userAgent = req.headers['user-agent'] || "";
+        const { user, accessToken, refreshToken } = await registerService.loginOtpVerifyService(otp_number, otp_reference, userAgent);
+
+        // 3.return with tokens and cookies
+
+        return setAuthCookies({ res, accessToken, refreshToken })
+            .status(statusCodes.CREATED)
+            .json(
+                success_response(
+                    statusCodes.CREATED,
+                    "OTP is verified",
+                    {
+                        user,
+                        message: "user successfully login",
+                        accessToken,
+                        refreshToken,
+                    },
+                    true
+                )
+            );
+
+    } catch (error) {
+        const { statusCode, message } = catchErrorMsgAndStatusCode(error);
+        console.log("error in login otp verify controller : ", message);
+        return res
+            .status(statusCode)
+            .json(
+                failed_response(
+                    statusCode,
+                    "failed to verify login OTP",
+                    { message: message },
+                    false
+                )
+            );
+    }
+});
+
+const logout = catchAsync(async (req, res) => {
+    try {
+        const accessToken = req.cookies.accessToken as string | undefined;
+
+        const { payload } = verifyToken(accessToken || "");
+        if (payload) {
+            await sessionModel.findByIdAndDelete(payload?.sessionId);
+        }
+
+        return clearAuthCookies(res)
+            .status(statusCodes.OK)
+            .json(
+                success_response(
+                    statusCodes.OK,
+                    "User Logout Successfully",
+                    { message: "Logout successfully" },
+                    true
+                )
+            );
+    } catch (error) {
+
+        let { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        return res
+            .status(statusCode)
+            .json(
+                failed_response(
+                    statusCode,
+                    "Something went wrong while logging out from user account",
+                    { message },
+                    false
+                )
+            );
+    }
+});
+
+
 
 const registerController = {
     sentOtpToVerifyEmail,
@@ -465,7 +567,9 @@ const registerController = {
     addProfileDetails,
     addLocationDetails,
     checkOrganizerSignedUp,
-    login
+    login,
+    loginOTPVerify,
+    logout
 };
 
 export default registerController;

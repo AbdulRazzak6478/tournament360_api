@@ -24,16 +24,21 @@ router.post("/organizer/register/add-location",registerController.addLocationDet
 // *****************************************************************************
 
 // 2.check email is signed up or not
-router.get("/organizer/check-signedUp",registerController.checkOrganizerSignedUp);
+router.get("/organizer/check-signedUp/:email",registerController.checkOrganizerSignedUp);
 
 // *****************************************************************************
 
 // 3. Login flow ---- two step verification
 // login 1st step : check credentials
-router.post('/auth/login')
+router.post('/auth/login',registerController.login)
 
 // login 2nd step : verify email otp
-router.post('/auth/login-otp')
+router.post('/auth/login-otp',registerController.loginOTPVerify);
+
+// *********************************************************************************************
+
+// 4.Logout user
+router.post("/organizer/logout",registerController.logout);
 
 
 
