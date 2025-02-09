@@ -3,6 +3,7 @@ import cors, { CorsOptions } from 'cors';
 import catchAsync from './utils/catchAsync.js';
 import env from './constants/env.js';
 import apiRoutes from "./routes/index.js"
+import authRoutes from "./routes/auth.routes.js"
 import { connectDB } from './config/database.js';
 
 
@@ -30,7 +31,8 @@ app.get('/', catchAsync(async (req, res) => {
     console.log("Request received");
     res.send("Hello World");
 }));
-app.use("/api",apiRoutes);
+app.use("/api/v1",apiRoutes);
+app.use("/auth",authRoutes);
 
 let port = env.PORT; // 4004
 app.listen(port, async() => {

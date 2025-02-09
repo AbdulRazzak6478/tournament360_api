@@ -16,6 +16,7 @@ import catchErrorMsgAndStatusCode from "../utils/catchError.js";
 import { clearAuthCookies, setAuthCookies } from "../utils/cookies.js";
 import sessionModel from "../models/session.model.js";
 import { verifyToken } from "../utils/jwt.js";
+import appErrorAssert from "../utils/appAssert.js";
 
 const sentOtpToVerifyEmail = catchAsync(async (req, res) => {
     try {
@@ -557,7 +558,36 @@ const logout = catchAsync(async (req, res) => {
     }
 });
 
+const refreshHandler = catchAsync(async (req, res) => {
+    try {
+        const refreshToken = req.cookies.refreshToken as string | undefined;
+        appErrorAssert(refreshToken, statusCodes.BAD_REQUEST, "refreshToken is missing");
 
+        const { accessToken, newRefreshToken } = await registerService.refreshUserAccessToken(refreshToken);
+
+        // send tokens in response
+        return setAuthCookies({ res, accessToken, refreshToken: newRefreshToken })
+            .status(statusCodes.OK)
+            .json(success_response(
+                statusCodes.OK,
+                "User Refresh Token Successfully",
+                { message: "Refresh token successfully" },
+                true
+            ));
+    } catch (error) {
+        let { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        return res
+            .status(statusCode)
+            .json(
+                failed_response(
+                    statusCode,
+                    "failed to refresh token",
+                    { message },
+                    false
+                )
+            );
+    }
+})
 
 const registerController = {
     sentOtpToVerifyEmail,
@@ -569,7 +599,8 @@ const registerController = {
     checkOrganizerSignedUp,
     login,
     loginOTPVerify,
-    logout
+    logout,
+    refreshHandler
 };
 
 export default registerController;

@@ -2,7 +2,7 @@ import mongoose, { Document } from "mongoose";
 import { thirtyDaysFromNow } from "../utils/dateHandlers.js";
 
 export interface SessionDocument extends Document {
-    userMongoId: mongoose.Types.ObjectId,
+    userMongoId: mongoose.Schema.Types.ObjectId,
     userAgent?: string,
     createdAt: Date,
     expiresAt: Date

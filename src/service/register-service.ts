@@ -1,4 +1,4 @@
-import { refreshTokenOptions, signToken } from './../utils/jwt.js';
+import { refreshTokenOptions, signToken, verifyToken } from './../utils/jwt.js';
 import mongoose from "mongoose";
 import statusCodes from "../constants/statusCodes.js";
 import verificationCodeType from "../constants/verificationCode.js";
@@ -8,7 +8,7 @@ import userRoleModel from "../models/userRole.js";
 import appErrorAssert from "../utils/appAssert.js";
 import AppError from "../utils/appError.js";
 import catchErrorMsgAndStatusCode from "../utils/catchError.js";
-import { OneMinuteFromNow } from "../utils/dateHandlers.js";
+import { OneMinuteFromNow, thirtyDaysFromNow } from "../utils/dateHandlers.js";
 import { sendOtpVerifyEmail, sentLoginVerifyOTP, sentWelcomeEmail } from "../utils/sentEmail.js";
 import { generateCustomID, generateOTP, generateUniqueReferenceID } from "../utils/uniqueIDs.js";
 import sessionModel from "../models/session.model.js";
@@ -420,6 +420,44 @@ const loginOtpVerifyService = async (otp: number, referenceID: string, userAgent
     }
 }
 
+const refreshUserAccessToken = async (refreshToken: string) => {
+    try {
+        const { payload } = verifyToken(refreshToken, {
+            secret: refreshTokenOptions.secret,
+        });
+        appErrorAssert(payload, statusCodes.UNAUTHORIZED, "Invalid refresh Token");
+        const userSession = await sessionModel.findById(payload.sessionId);
+        const now = Date.now();
+        appErrorAssert(
+            userSession && userSession?.expiresAt.getTime() > now,
+            statusCodes.UNAUTHORIZED,
+            "Session Expired",
+        );
+        // if the session is going to expires in 24 hours then refresh the session
+        if (userSession.expiresAt.getTime() - now < 24 * 60 * 60) {
+            userSession.expiresAt = thirtyDaysFromNow();
+            await userSession.save();
+        }
+        // generate refresh token
+        const newRefreshToken = signToken({ sessionId: userSession?._id }, refreshTokenOptions);
+        // generate accessToken
+        const accessToken = signToken(
+            {
+                userId: userSession?.userMongoId,
+                sessionId: userSession._id,
+            }
+        );
+        return {
+            accessToken,
+            newRefreshToken
+        }
+    } catch (error) {
+        const { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        console.log("error in refresh token service :", message);
+        throw new AppError(statusCode, message);
+    }
+}
+
 const registerService = {
     sentOtpToEmail,
     verifyEmailOtp,
@@ -429,7 +467,8 @@ const registerService = {
     addOrganizerLocationDetails,
     checkIsSignedUp,
     loginService,
-    loginOtpVerifyService
+    loginOtpVerifyService,
+    refreshUserAccessToken
 }
 
 export default registerService;
