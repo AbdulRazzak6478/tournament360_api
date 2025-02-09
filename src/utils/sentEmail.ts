@@ -3,7 +3,7 @@ import env from '../constants/env.js';
 import AppError from './appError.js';
 import statusCodes from '../constants/statusCodes.js';
 import Brevo, { TransactionalEmailsApi } from "@getbrevo/brevo";
-import { sentOtpEmailVerifyTemplate } from './emailTemplates.js';
+import { sentLoginVerifyOTPTemplate, sentOtpEmailVerifyTemplate } from './emailTemplates.js';
 
 // nodemailer setup
 const transporter = nodemailer.createTransport({
@@ -197,6 +197,39 @@ export const sentWelcomeEmail = async (email:string) => {
             htmlContent : `<p> Dear ${email}, </br> Welcome to our platform, your account has been created in <b>Tournament360</b> platform . </b> 
             <p>Completed your profile and proceed to create tournaments in our platform</p> </p>
             `
+        });
+        console.log('Email sent:', response);
+        return response;
+    } catch (error) {
+        console.log('Error:', error);
+        if (error instanceof Error) {
+            throw new AppError(statusCodes.BAD_REQUEST, error?.message);
+        } else {
+            throw error;
+        }
+    }
+}
+
+
+export const sentLoginVerifyOTP = async (email:string,name:string,otp:number) => {
+    const sender = {
+        email: "abdulrazzak4186@gmail.com",
+        name: "Tournament360",
+    };
+
+    // const receiver = [{ email: 'armanshoaib391@gmail.com' }];
+    // const receiver = [{ email: email,name:name }];
+    const receiver = [{ email: email }];
+
+    try {
+        const response = await emailApi.sendTransacEmail({
+            sender,
+            to: receiver,
+            subject: "Welcome! Login Verification OTP for Tournament360",
+            params:{
+                otp : 435678,
+            },
+            htmlContent : sentLoginVerifyOTPTemplate(otp,email)
         });
         console.log('Email sent:', response);
         return response;

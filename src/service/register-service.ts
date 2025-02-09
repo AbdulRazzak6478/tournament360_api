@@ -2,17 +2,18 @@ import { refreshTokenOptions, signToken } from './../utils/jwt.js';
 import mongoose from "mongoose";
 import statusCodes from "../constants/statusCodes.js";
 import verificationCodeType from "../constants/verificationCode.js";
-import organizerModel, { locationDocument } from "../models/Organizer.model.js";
+import organizerModel, { locationDocument, OrganizerDocument } from "../models/Organizer.model.js";
 import OtpModel from "../models/otp-model.js";
 import userRoleModel from "../models/userRole.js";
 import appErrorAssert from "../utils/appAssert.js";
 import AppError from "../utils/appError.js";
 import catchErrorMsgAndStatusCode from "../utils/catchError.js";
 import { OneMinuteFromNow } from "../utils/dateHandlers.js";
-import { sendOtpVerifyEmail, sentWelcomeEmail } from "../utils/sentEmail.js";
+import { sendOtpVerifyEmail, sentLoginVerifyOTP, sentWelcomeEmail } from "../utils/sentEmail.js";
 import { generateCustomID, generateOTP, generateUniqueReferenceID } from "../utils/uniqueIDs.js";
 import sessionModel from "../models/session.model.js";
 import GlobalUserModel from '../models/globalUsers.model.js';
+import { comparePassword } from '../utils/helpers.js';
 
 const sentOtpToEmail = async (email: string) => {
     try {
@@ -43,8 +44,8 @@ const sentOtpToEmail = async (email: string) => {
         // return reference Id
         return { referenceID };
     } catch (error) {
-        console.log("error in sent otp verify email service :", error);
         const { message, statusCode } = catchErrorMsgAndStatusCode(error);
+        console.log("error in sent otp verify email service :", message);
         throw new AppError(statusCode, message);
     }
 }
@@ -321,16 +322,41 @@ const checkIsSignedUp = async (email:string)=>{
 
 const loginService = async(email:string,password:string)=>{
 
-    // make a global user collection
-    // id with dynamic ref, userRole,name,email,isSignedUp
-
-
-    // make a model
-    // update in verify email otp
-    // create account , update instance
-    // check isSignedUp service too
     try{
-        //1.
+        // 1.check user is exist or not
+        const user = await GlobalUserModel.findOne({email : email}).populate('userMongoId');
+        appErrorAssert(user,statusCodes.NOT_FOUND,"email is not registered."); 
+        appErrorAssert(user?.userMongoId,statusCodes.NOT_FOUND,'user not found.');
+
+        // 2.compare passwords
+        const platformUser = (user?.userMongoId as unknown) as OrganizerDocument;
+        appErrorAssert(comparePassword(password, platformUser.password), statusCodes.BAD_REQUEST, "Password is incorrect. Please try again.");
+        
+        // 3.generate OTP and referenceID
+        const OTP = generateOTP();
+        const referenceID = generateUniqueReferenceID();
+
+        // 4.create otp reference
+        const data = {
+            type: verificationCodeType.LoginVerification,
+            email,
+            otp_reference: referenceID,
+            otp_number: OTP,
+            expiresIn: OneMinuteFromNow() // 1 minute from now
+        }
+        console.log("login otp payload : ", data);
+        const otpReference = await OtpModel.create(data);
+        appErrorAssert(otpReference,statusCodes.BAD_REQUEST,"Not able to add otp reference.");
+        console.log("otpReference : ", otpReference);
+
+        // 5.sent login verify otp
+        const name = user?.name || email;
+        await sentLoginVerifyOTP(email,name,OTP);
+
+        // return referenceID
+        return {
+            referenceID
+        }
 
     }catch(error)
     {
@@ -347,7 +373,8 @@ const registerService = {
     addOrganizerContactDetails,
     addOrganizerProfileDetails,
     addOrganizerLocationDetails,
-    checkIsSignedUp
+    checkIsSignedUp,
+    loginService
 }
 
 export default registerService;

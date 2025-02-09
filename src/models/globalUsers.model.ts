@@ -15,7 +15,7 @@ export interface GlobalUserDocument extends Document {
 const globalUserSchema = new Schema<GlobalUserDocument>({
     userMongoId : {
         type: mongoose.Schema.Types.ObjectId,
-        refPath : "",
+        refPath : "designationRef",
         required:true,
         index:true
     },

@@ -410,11 +410,11 @@ const checkOrganizerSignedUp = catchAsync(async (req, res) => {
     }
 });
 
-const login = catchAsync(async (req,res)=>{
-    try{
+const login = catchAsync(async (req, res) => {
+    try {
         // 1.validate request payload
         try {
-            await loginSchema.validate(req.params.email, { abortEarly: false });
+            await loginSchema.validate(req.body, { abortEarly: false });
         } catch (error) {
             if (error instanceof ValidationError) {
                 console.log(
@@ -435,12 +435,13 @@ const login = catchAsync(async (req,res)=>{
         }
 
         // 2.call login service
-        const {email, password} = req.body;
-        
-        // 3.return response
+        const { email, password } = req.body;
 
-    }catch(error)
-    {
+        const response = await registerService.loginService(email, password);
+
+        // 3.return response
+        return res.status(statusCodes.CREATED).json(success_response(statusCodes.CREATED, "Login OTP is Sent.", response, true));
+    } catch (error) {
         const { statusCode, message } = catchErrorMsgAndStatusCode(error);
         console.log("error in login controller : ", message);
         return res
@@ -464,6 +465,7 @@ const registerController = {
     addProfileDetails,
     addLocationDetails,
     checkOrganizerSignedUp,
+    login
 };
 
 export default registerController;

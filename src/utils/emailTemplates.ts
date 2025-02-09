@@ -82,7 +82,17 @@ const sentOtpEmailVerifyTemplate = (OTP: number, email: string) => {
       `
 };
 
+const sentLoginVerifyOTPTemplate = (OTP:number,name:string)=>{
+      return `
+            <p>Dear ${name}, </p>
+            <p>Your login Verify OTP is : ${OTP}
+
+
+            <h1>Tournament360 </p>
+      `;
+}
+
 export  {
     sentOtpEmailVerifyTemplate,
-
+    sentLoginVerifyOTPTemplate,
 }
