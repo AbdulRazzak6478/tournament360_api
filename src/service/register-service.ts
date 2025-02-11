@@ -4,7 +4,7 @@ import statusCodes from "../constants/statusCodes.js";
 import verificationCodeType from "../constants/verificationCode.js";
 import organizerModel, { locationDocument, OrganizerDocument } from "../models/Organizer.model.js";
 import OtpModel from "../models/otp-model.js";
-import userRoleModel from "../models/userRole.js";
+import userRoleModel from "../models/userRole.model.js";
 import appErrorAssert from "../utils/appAssert.js";
 import AppError from "../utils/appError.js";
 import catchErrorMsgAndStatusCode from "../utils/catchError.js";

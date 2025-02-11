@@ -30,6 +30,9 @@ const userRolesSchema = new Schema<userRoleDocument>({
             type: { type: Boolean, default: false },
             permissions: [String]
         },
+        subordinate : {
+            type : Boolean, default : false
+        }
     }
 }, { timestamps: true });
 
