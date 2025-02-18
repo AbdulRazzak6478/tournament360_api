@@ -3,7 +3,7 @@ import mongoose, { Document, Model } from 'mongoose';
 
 
 export interface SubOrdinateDocument extends Document {
-    organizer: mongoose.Schema.Types.ObjectId;
+    organizerId: mongoose.Schema.Types.ObjectId;
     name: string;
     password: string;
     email: string;
@@ -15,23 +15,25 @@ export interface SubOrdinateDocument extends Document {
     mobileNumber: string;
     totalNoOfPasswordReset: number;
     passwordReset: boolean;
+    comparePassword(val: string): Promise<boolean>;
+    omitPassword(): Omit<SubOrdinateDocument, "password">;
     createdAt: Date;
     updated: Date;
 }
-const SubOrdinateSchema = new mongoose.Schema({
-    organizer: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Organizer', index: true },
+const SubOrdinateSchema = new mongoose.Schema<SubOrdinateDocument>({
+    organizerId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Organizer', index: true },
     name: { type: String, required: true, index: true },
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true, index: true },
     designation: { type: String, required: true },
-    userRole: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'user_role', index: true },
+    userRole: { type: mongoose.Schema.Types.ObjectId, ref: 'user_role', index: true, default: null },
     gender: { type: String, required: true },
     dob: { type: Date, required: true },
     status: { type: String, required: true, enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'], index: true },
     mobileNumber: { type: String, required: true, index: true },
     totalNoOfPasswordReset: { type: Number, default: 0 },
     passwordReset: { type: Boolean, default: false },
-},{timestamps: true});
+}, { timestamps: true });
 
 SubOrdinateSchema.index({ email: 1 });
 SubOrdinateSchema.index({ name: 1 });

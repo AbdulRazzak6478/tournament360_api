@@ -2,6 +2,10 @@ import yup from "yup";
 
 const emailValidate = yup.string().email('Invalid email format').required('Email is required');
 
+const mobileNumberValidate = yup.string().required("mobileNumber is required").matches(/^\+[1-9]\d{1,14}$/, "Enter a valid mobileNumber.");
+
+const dobValidate =  yup.date().required("dob is required").max(new Date(new Date().setFullYear(new Date().getFullYear() - 18)), "You must be at least 18 years old.").typeError("Invalid date format");
+
 const ObjectIdSchema = yup.string().required("id is required").matches(/^[0-9a-fA-F]{24}$/, "pass a valid id as ObjectId.");
 
 const emailOtpVerifySchema = yup.object({
@@ -28,7 +32,7 @@ const addProfileDetailsSchema = yup.object({
     firstName: yup.string().required('firstName is required').min(1, "firstName must be at least 1 character"),
     lastName: yup.string().required('lastName is required').min(1, "lastName must be at least 1 character"),
     gender: yup.string().required('gender is required'),
-    dob: yup.date().required("dob is required").max(new Date(new Date().setFullYear(new Date().getFullYear() - 18)), "You must be at least 18 years old.").typeError("Invalid date format"),
+    dob: dobValidate,
     profession: yup.string().required("profession is required.")
 });
 
@@ -43,12 +47,40 @@ const addLocationDetailsSchema = yup.object({
 });
 
 const loginSchema = yup.object({
-    email:yup.string().email('Invalid email format').required('email is required'),
+    email:emailValidate,
     password:yup.string().required("password is required.").min(8,'password must be at least 8 characters.'),
 });
 const resetPasswordSchema = yup.object({
     referenceID: yup.string().required("referenceID is required"),
     password:yup.string().required("password is required.").min(8,'password must be at least 8 characters.'),
+});
+
+
+const createSubordinateSchema = yup.object({
+    name: yup.string().required("name is required.").min(3,"minimum 3 characters required."),
+    email:emailValidate,
+    password: yup.string().required('password is required.').min(8,'password must be at least 8 characters.'),
+    designation :yup.string().required("designation is required."),
+    gender: yup.string().required("gender is required."),
+    dob :dobValidate,
+    mobileNumber : mobileNumberValidate,
+    userAgent: yup.string().required("userAgent is missing.")
+});
+const createSubAdminSchema = yup.object({
+    name: yup.string().required("name is required.").min(3, "minimum 3 characters required."),
+    email: emailValidate,
+    password: yup.string().required('password is required.').min(8, 'password must be at least 8 characters.'),
+    designation: yup.string().required("designation is required."),
+    gender: yup.string().required("gender is required."),
+    dob: dobValidate,
+    mobileNumber: mobileNumberValidate,
+    permissions: yup.array().of(yup.string().required("permission is required")).required("permissions are required")
+});
+
+const createAdminSchema = yup.object({
+    name : yup.string().required("name is required."),
+    password : yup.string().required('password is required.').min(8,'password must be at least 8 characters.'),
+    email : emailValidate
 });
 
 export {
@@ -59,5 +91,8 @@ export {
     addProfileDetailsSchema,
     addLocationDetailsSchema,
     loginSchema,
-    resetPasswordSchema
+    resetPasswordSchema,
+    createSubordinateSchema,
+    createSubAdminSchema,
+    createAdminSchema
 }

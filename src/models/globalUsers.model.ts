@@ -41,7 +41,7 @@ const globalUserSchema = new Schema<GlobalUserDocument>({
     },
     designationRef: {
         type : String,
-        enum : ['Organizer'],
+        enum : ['Organizer','SubOrdinate','Admin','SubAdmin'],
         required:true
     }
 },{timestamps : true});

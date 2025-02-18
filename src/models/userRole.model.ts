@@ -11,6 +11,7 @@ export interface userRoleDocument extends Document {
             type: boolean;
             permissions: [string];
         };
+        subordinate: boolean;
     };
     createdAt: Date;
     updatedAt: Date;

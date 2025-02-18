@@ -2,7 +2,7 @@ import  bcrypt  from 'bcryptjs';
 import mongoose, { Schema, model, Document } from 'mongoose';
 import { Model } from 'mongoose';
 
-interface ISubAdmin extends Document {
+interface SubAdminDocument extends Document {
     name: string;
     password: string;
     email: string;
@@ -14,23 +14,27 @@ interface ISubAdmin extends Document {
     mobileNumber: string;
     totalNoOfPasswordReset: number;
     passwordReset: boolean;
+    comparePassword(val: string): Promise<boolean>;
+    omitPassword(): Omit<SubAdminDocument, "password">;
     createdAt: Date;
     updated: Date;
 }
-const subAdminSchema = new Schema<ISubAdmin>({
+const subAdminSchema = new Schema<SubAdminDocument>({
     name: { type: String, required: true },
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     designation: { type: String, required: true },
-    userRole: { type: mongoose.Schema.Types.ObjectId, ref: 'user_role', required: true },
+    userRole: { type: mongoose.Schema.Types.ObjectId, ref: 'user_role' },
     gender: { type: String, required: true },
     dob: { type: Date, required: true },
-    status: { type: String, required: true,enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'] },
+    status: { type: String, default : 'ACTIVE',enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'] },
     mobileNumber: { type: String, required: true },
     totalNoOfPasswordReset: { type: Number, default: 0 },
     passwordReset: { type: Boolean, default: false },
 },{timestamps: true});
-subAdminSchema.pre<ISubAdmin>("save", async function (next) {
+
+
+subAdminSchema.pre<SubAdminDocument>("save", async function (next) {
     console.log("user modified check : ", this.isModified("password"));
 
     // No need to assign 'this' to a local variable
@@ -64,6 +68,6 @@ subAdminSchema.methods.omitPassword = function () {
     return user;
 }
 
-const SubAdminModel: Model<ISubAdmin> = model<ISubAdmin>('SubAdmin', subAdminSchema);
+const SubAdminModel: Model<SubAdminDocument> = model<SubAdminDocument>('SubAdmin', subAdminSchema);
 
 export default SubAdminModel;
