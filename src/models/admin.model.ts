@@ -9,6 +9,8 @@ export interface AdminDocument extends Document {
     role: mongoose.Schema.Types.ObjectId;
     comparePassword(val: string): Promise<boolean>;
     omitPassword(): Omit<AdminDocument, "password">;
+    totalNoOfPasswordReset: number;
+    passwordReset: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -19,6 +21,8 @@ const AdminSchema: Schema = new Schema<AdminDocument>({
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     role: { type: mongoose.Schema.Types.ObjectId },
+    totalNoOfPasswordReset: { type: Number ,default : 0},
+    passwordReset: { type: Boolean, default:false},
 }, { timestamps: true });
 
 AdminSchema.pre<AdminDocument>("save", async function (next) {

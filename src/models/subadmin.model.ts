@@ -2,7 +2,7 @@ import  bcrypt  from 'bcryptjs';
 import mongoose, { Schema, model, Document } from 'mongoose';
 import { Model } from 'mongoose';
 
-interface SubAdminDocument extends Document {
+export interface SubAdminDocument extends Document {
     name: string;
     password: string;
     email: string;

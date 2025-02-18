@@ -7,7 +7,7 @@ const router = Router();
 
 // 1. Login flow ---- two step verification
 // login 1st step : check credentials
-router.post('/login', registerController.login)
+router.post('/login', registerController.login);
 
 // login 2nd step : verify email otp
 router.post('/login-otp', registerController.loginOTPVerify);

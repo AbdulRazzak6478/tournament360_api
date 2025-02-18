@@ -434,7 +434,7 @@ const login = catchAsync(async (req, res) => {
                         failed_response(
                             statusCodes.BAD_REQUEST,
                             "Yup validation failed",
-                            { error: error?.errors },
+                            { message: error?.message, error: error?.errors },
                             false
                         )
                     );
