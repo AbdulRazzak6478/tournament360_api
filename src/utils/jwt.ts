@@ -25,7 +25,7 @@ const defaultOptions: SignOptions = {
 }
 
 export const accessTokenOptions: SignOptionsAndSecret = {
-    expiresIn: '15m',
+    expiresIn: '3h',
     secret: env.JWT_ACCESS_SECRET
 }
 export const refreshTokenOptions: SignOptionsAndSecret = {

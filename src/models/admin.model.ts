@@ -1,4 +1,4 @@
-import  bcrypt  from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import mongoose, { Schema, Document, model } from 'mongoose';
 
 // Define the Admin interface
@@ -21,9 +21,11 @@ const AdminSchema: Schema = new Schema<AdminDocument>({
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     role: { type: mongoose.Schema.Types.ObjectId },
-    totalNoOfPasswordReset: { type: Number ,default : 0},
-    passwordReset: { type: Boolean, default:false},
+    totalNoOfPasswordReset: { type: Number, default: 0 },
+    passwordReset: { type: Boolean, default: false },
 }, { timestamps: true });
+
+AdminSchema.index({ email: 1 });
 
 AdminSchema.pre<AdminDocument>("save", async function (next) {
     console.log("user modified check : ", this.isModified("password"));

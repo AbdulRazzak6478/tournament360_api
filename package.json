@@ -6,11 +6,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc && tsc-alias",
-    "build3": " tsc -w ",
+    "tsc": " tsc -w ",
+    "devstart": "nodemon dist/index.js",
     "watch": "tsc -w && tsc-alias",
     "build2": "nodemon add-js-extensions.cjs",
     "Check": "ts-node-dev --files src/index.ts",
-    "start": "nodemon dist/index.js",
     "dev": "nodemon --watch src --exec ts-node src/index.ts",
     "dev2": "concurrently \"tsc -w\" \" nodemon dist/index.js\" "
   },
