@@ -1,6 +1,5 @@
 import assert from "node:assert";
 import AppError from "./appError.js";
-import AppErrorCode from "../constants/appErrorCode.js";
 import { httpStatusCodeType } from "../constants/statusCodes.js";
 
 
@@ -8,7 +7,7 @@ type assertType = (
     condition: any,
     httpStatusCode: httpStatusCodeType,
     message: string,
-    appErrorCode?: AppErrorCode
+    appErrorCode?: string
 ) => asserts condition;
 
 

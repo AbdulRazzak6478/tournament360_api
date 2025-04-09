@@ -7,6 +7,7 @@ import _ from "lodash";
 import TournamentModel from "../../models/tournament.model.js";
 import { failed_response, success_response } from "../../utils/response.js";
 import catchErrorMsgAndStatusCode from "../../utils/catchError.js";
+import removeKnockoutTournamentParticipant from "../../service/tournament/knockout/removeParticipantKnockoutService.js";
 
 const removeParticipantFromTournament = catchAsync(async (req, res) => {
     try {
@@ -27,10 +28,10 @@ const removeParticipantFromTournament = catchAsync(async (req, res) => {
         }
         let responseData = {};
         if (tournamentDetails?.formatName?.toLowerCase() === "knockout") {
-            // responseData = await removeParticipantInKnockoutFormatAndReArrangeTournament(tournamentDetails, participantID);
-            responseData = {
-                message: "work in progress for knockout section",
-            };
+            responseData = await removeKnockoutTournamentParticipant(tournamentDetails?._id?.toString() as string, participantID);
+            // responseData = {
+            //     message: "work in progress for knockout section",
+            // };
         }
         if (tournamentDetails?.formatName?.toLowerCase() === "double_elimination_bracket") {
             // responseData = await removeParticipantFromDoubleKnockoutTournament(tournamentDetails, participantId)
@@ -69,4 +70,4 @@ const removeParticipantFromTournament = catchAsync(async (req, res) => {
     }
 });
 
-module.exports = removeParticipantFromTournament;
+export default removeParticipantFromTournament;

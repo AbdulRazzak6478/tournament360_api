@@ -1,15 +1,18 @@
-import mongoose, { ClientSession, ObjectId } from "mongoose";
-import AppError from "../../../utils/appError.js";
-import catchErrorMsgAndStatusCode from "../../../utils/catchError.js"
-import TournamentModel from "../../../models/tournament.model.js";
-import KnockoutModel from "../../../models/knockoutFormat.model.js";
-import AppErrorCode from "../../../constants/appErrorCode.js";
-import statusCodes from "../../../constants/statusCodes.js";
+import { ObjectId } from "mongoose";
+import statusCodes from "../../../constants/statusCodes";
+import matchModel, { IMatch } from "../../../models/match.model";
+import AppError from "../../../utils/appError";
+import catchErrorMsgAndStatusCode from "../../../utils/catchError";
+import mongoose from "mongoose";
+import roundModel from "../../../models/round.model";
+import { ClientSession } from "mongoose";
+import AppErrorCode from "../../../constants/appErrorCode";
 import _ from "lodash";
-import roundModel from "../../../models/round.model.js";
-import matchModel, { IMatch } from "../../../models/match.model.js";
-import teamModel, { ITeam } from "../../../models/team.model.js";
-import playerModel, { IPlayer } from "../../../models/player.model.js";
+import TournamentModel from "../../../models/tournament.model";
+import KnockoutModel from "../../../models/knockoutFormat.model";
+import teamModel from "../../../models/team.model";
+import playerModel from "../../../models/player.model";
+import Sport from "../../../models/sport.model";
 
 const getRoundNames = (participants: number, totalRounds: number) => {
     let roundNames = [];
@@ -381,182 +384,350 @@ const arrangingTeamsBasedOnFixingType = (fixingType: string, participants: Objec
         throw new AppError(statusCode, message);
     }
 };
-const addParticipantInKnockoutFormatAndReArrangeTournament = async (tournamentID: string, participantName: string) => {
+
+type dataType = {
+    tournamentID: string,
+    fixingType: string,
+    gameType: string,
+    participants: number,
+    Name: string,
+    description: string,
+    startDate: Date,
+    endDate: Date,
+    sportID: string,
+    formatType: string,
+}
+type participantsParamsType = {
+    participants: number,
+    tournamentID: string,
+    gameType: string,
+    sportID: string,
+    sportName: string,
+
+}
+const createParticipants = async (
+    { participants, tournamentID, gameType, sportID, sportName }: participantsParamsType,
+    session: ClientSession // Pass session as an argument
+) => {
+    try {
+        let participantsObjData: {
+            tournamentID: string;
+            sportID: string;
+            sportName: string;
+            participantNumber: number;
+            name: string;
+        }[] = [];
+
+        for (let i = 1; i <= participants; i++) {
+            participantsObjData.push({
+                tournamentID,
+                sportID,
+                sportName,
+                participantNumber: i,
+                name: gameType === "team" ? `Team #${i}` : `Player #${i}`,
+            });
+        }
+
+        let participantsArr = [];
+        if (gameType === "team") {
+            participantsArr = await teamModel.create(participantsObjData, { session });
+        }
+        else if (gameType === "individual") {
+            participantsArr = await playerModel.create(participantsObjData, { session });
+        } else {
+            throw new AppError(statusCodes.BAD_REQUEST, "Invalid gameType while creating Participants.");
+        }
+        if (_.isEmpty(participantsArr)) {
+            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.notAbleToCreateField(gameType === "team" ? "Teams" : "Players"));
+        }
+
+        participantsArr.sort((participant1, participant2) => participant1.participantNumber - participant2.participantNumber);
+        let participantsIds = participantsArr.map((participant) => participant?._id?.toString());
+
+        return participantsIds; // Return generated IDs 
+    } catch (error) {
+        const { statusCode, message } = catchErrorMsgAndStatusCode(error);
+        throw new AppError(statusCode, message);
+    }
+};
+const editKnockoutTournament = async (data: dataType) => {
     const session = await mongoose.startSession();
     try {
+        console.log("update Tournament Data : ", data);
         session.startTransaction();
-
-        let tournamentDetails = await TournamentModel
-            .findById(tournamentID)
-            .session(session);
+        const { tournamentID, fixingType, gameType, participants, Name, description, startDate, endDate, sportID, formatType } = data;
+        let tournamentDetails = await TournamentModel.findById(tournamentID).session(session);
         if (_.isEmpty(tournamentDetails)) {
-            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotFound("Tournament"));
+            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotExist("Tournament"))
         }
-        let KnockoutFormat = await KnockoutModel
-            .findById(tournamentDetails?.formatID)
-            .session(session);
-        if (_.isEmpty(KnockoutFormat)) {
-            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotFound("Knockout Format"));
+        if (tournamentDetails?.status === 'ACTIVE' || tournamentDetails?.status === 'COMPLETED') {
+            throw new AppError(statusCodes.BAD_REQUEST, `Tournament is ${tournamentDetails?.status}, Can't Updated Tournament.`);
         }
 
-        let isWinnerDeclared = false;
-        if (tournamentDetails?.status !== "PENDING") {
-            isWinnerDeclared = true;
+        let knockoutFormatDetails = await KnockoutModel.findById(tournamentDetails?.formatID).session(session);
+        if (_.isEmpty(knockoutFormatDetails)) {
+            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotExist("Knockout Format"))
         }
-        if (isWinnerDeclared) {
-            throw new AppError(statusCodes.BAD_REQUEST, `Can't Add Participants. Tournament is ${tournamentDetails?.status === "ACTIVE" ? "STARTED" : tournamentDetails?.status}`);
-        }
-
-        await roundModel
-            .deleteMany({
-                tournamentID: tournamentDetails?._id,
-            })
-            .session(session);
-        await matchModel
-            .deleteMany({
-                tournamentID: tournamentDetails?._id,
-            })
-            .session(session);
-
-
-        let tournamentId = tournamentDetails?._id?.toString();
-        let allParticipantIds: string[] = [];
-        const participantObj = {
-            tournamentID: tournamentId,
-            participantNumber: tournamentDetails?.totalParticipants + 1,
-            sportID: tournamentDetails?.sportID,
-            sportName: "",
-            name: participantName,
-        }
-        if (tournamentDetails?.gameType === 'team') {
-            let newParticipant: ITeam[] = await teamModel.create([participantObj], {
-                session: session,
-            });
-            if (_.isEmpty(newParticipant)) {
-                throw new AppError(statusCodes.BAD_REQUEST, "Team Creation Failed.");
+        // 2. Update SportID Into Tournament
+        if (sportID !== tournamentDetails?.sportID?.toString()) {
+            let tournamentSport = await Sport.findById(sportID).session(session);
+            if (_.isEmpty(tournamentSport)) {
+                throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotExist("Sport"))
             }
-            const teams = await teamModel
-                .find({ tournamentID: tournamentId })
-                .session(session).lean();
-            if (_.isEmpty(teams)) {
-                throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotFound("Teams"));
+            tournamentDetails.sportID = tournamentSport?._id as unknown as mongoose.Schema.Types.ObjectId;
+            tournamentDetails.sportName = tournamentSport?.name;
+            // tournamentDetails.sportName = tournamentSport?.name;
+            if (tournamentSport?.name?.toLowerCase() === "cricket") {
+                tournamentDetails.scoreType = "Cricket";
+            } else if (tournamentSport?.name?.toLowerCase() === "football") {
+                tournamentDetails.scoreType = "Football";
+            } else if (
+                tournamentDetails?.scoreType === "Cricket" ||
+                tournamentDetails?.scoreType === "Football"
+            ) {
+                tournamentDetails.scoreType = "Top Score";
             }
-            let sportName = teams?.[0]?.sportName;
-            await teamModel.findByIdAndUpdate(newParticipant?.[0]?._id, { sportName });
-            allParticipantIds = teams?.map((team) => team?._id?.toString());
-        }
-        if (tournamentDetails?.gameType === 'individual') {
-            let newParticipant: IPlayer[] = await playerModel.create([participantObj], {
-                session: session,
-            });
-            if (_.isEmpty(newParticipant)) {
-                throw new AppError(statusCodes.BAD_REQUEST, "Player Creation Failed.");
-            }
-            const players = await playerModel
-                .find({ tournamentID: tournamentId })
-                .session(session).lean();
-            if (_.isEmpty(players)) {
-                throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotFound("Players"));
-            }
-            let sportName = players?.[0]?.sportName;
-            await teamModel.findByIdAndUpdate(newParticipant?.[0]?._id, { sportName });
-            allParticipantIds = players?.map((player) => player?._id?.toString());
-        }
-
-        let totalRounds = Math.ceil(Math.log2(allParticipantIds?.length));
-        let roundNames = getRoundNames(allParticipantIds?.length, totalRounds);
-
-
-        let roundsData = getBracketsRoundsAndMatches(allParticipantIds?.length);
-
-        let roundsPayload = roundsData?.map((round) => {
-            let obj = round?.roundNumber === 1 ? { participantsIds: allParticipantIds as string[] } : {}
-            return {
-                tournamentID: tournamentId as string,
-                formatTypeID: KnockoutFormat?._id?.toString() as string,
-                formatName: "knockout",
-                formatRef: "knockout",
-                fixingType: tournamentDetails?.fixingType as string,
-                gameType: tournamentDetails?.gameType as string,
-                participantsRef: tournamentDetails?.gameType === "team" ? "team" : "player",
-                roundNumber: round?.roundNumber,
-                roundName: round?.roundName as string,
-                matches: round?.matches,
-                brackets: "winners",
-                scoreType: tournamentDetails?.scoreType as string,
-                ...obj
-            };
-        });
-
-        await createRoundAndTheirMatches(roundsPayload, session);
-
-        const allRoundsAndMatches = await referencingMatchesToNextMatches(tournamentId as string, KnockoutFormat?._id?.toString() as string, "winners", session);
-
-        // const allRoundsAndMatches = allRoundsData;
-        const arrangedTeams = arrangingTeamsBasedOnFixingType(
-            tournamentDetails?.fixingType,
-            (allParticipantIds as unknown) as ObjectId[]
-        );
-
-        // assigning participants into round matches
-        let idx = 0;
-        for (let round = 0; round < allRoundsAndMatches.length; round++) {
-            if (allRoundsAndMatches[round]?.roundNumber === 1) {
-                idx = round;
+            await matchModel
+                .updateMany(
+                    { tournamentID: tournamentDetails?._id },
+                    { scoreType: tournamentDetails.scoreType }
+                )
+                .session(session);
+            // 2.checks if sportName is different
+            if (tournamentDetails?.gameType === "team") {
+                await teamModel
+                    .updateMany(
+                        { tournamentID: tournamentDetails?._id },
+                        {
+                            sportID: tournamentSport?._id?.toString(),
+                            sportName: tournamentSport?.name,
+                        }
+                    )
+                    .session(session);
+            } else {
+                await playerModel
+                    .updateMany(
+                        { tournamentID: tournamentDetails?._id },
+                        {
+                            sportID: tournamentSport?._id?.toString(),
+                            sportName: tournamentSport?.name,
+                        }
+                    )
+                    .session(session);
             }
         }
-        let index = 0;
-        let bulkMatchUpdates = [];
-        for (let match of allRoundsAndMatches[idx].matches) {
-            if (arrangedTeams && index < arrangedTeams.length) {
-                let setObj: { participantA: mongoose.Schema.Types.ObjectId, participantB?: mongoose.Schema.Types.ObjectId } = { participantA: arrangedTeams[index] }
-                match.participantA = arrangedTeams[index];
-                if (index + 1 < arrangedTeams.length) {
-                    match.participantB = arrangedTeams[index + 1];
-                    setObj.participantB = arrangedTeams[index + 1];
-                    index += 2;
+        if (tournamentDetails?.gameType !== gameType) {
+            throw new AppError(statusCodes.BAD_REQUEST, "gameType Cannot be Change.")
+        }
+        if (tournamentDetails?.formatName !== formatType) {
+            throw new AppError(statusCodes.BAD_REQUEST, "formatType Cannot be Change.")
+        }
+        if (data.gameType !== tournamentDetails?.gameType?.toString()) {
+            throw new Error(", tournament gameType cannot change");
+        }
+        // 3. Save Tournament Details
+        if (tournamentDetails.tournamentName !== Name) {
+            tournamentDetails.tournamentName = Name;
+        }
+        if (tournamentDetails.description !== description) {
+            tournamentDetails.description = description;
+        }
+        if (tournamentDetails.startDate !== startDate) {
+            tournamentDetails.startDate = startDate;
+        }
+        if (tournamentDetails.endDate !== endDate) {
+            tournamentDetails.endDate = endDate;
+        }
+        // if (flag) {
+        //     tournamentDetails = await tournamentDetails.save({ session });
+        // }
+        // 4. Updating Participants into tournament
+        if (participants !== tournamentDetails?.totalParticipants) {
+            let participantIds = [];
+            let checks = participants - tournamentDetails?.totalParticipants > 0 ? true : false;
+            let remainingParticipants = checks
+                ? participants - tournamentDetails?.totalParticipants
+                : participants;
+            const tourId = tournamentDetails?._id?.toString();
+            // let starting = checks ? tournamentDetails?.totalParticipants : 0;
+            if (!checks) {
+                if (tournamentDetails.gameType === "team") {
+                    await teamModel.deleteMany({
+                        tournamentID: tourId,
+                    });
                 }
-                bulkMatchUpdates.push({
-                    updateOne: {
-                        filter: { _id: match?._id },
-                        update: { $set: setObj }
-                    }
-                })
-                // match = await (match as mongoose.Document & IMatch).save({ session });
+                if (tournamentDetails.gameType === "individual") {
+                    await playerModel.deleteMany({
+                        tournamentID: tourId,
+                    });
+                }
+                knockoutFormatDetails.participants = [];
             }
-        }
-        const result3 = await matchModel.bulkWrite(bulkMatchUpdates, { session });
-        if (!_.isEmpty(result3) && (result3?.matchedCount !== bulkMatchUpdates?.length || result3?.modifiedCount !== bulkMatchUpdates?.length)) {
-            throw new AppError(statusCodes.BAD_REQUEST, "Failed to Update Match Participants.")
-        }
-        const allRounds = allRoundsAndMatches;
-        if (_.isEmpty(allRounds)) {
-            throw new AppError(statusCodes.BAD_REQUEST, "Rounds and their Matches not found.");
-        }
-        let roundsIds = allRounds?.map((round) => (round?._id as unknown) as mongoose.Schema.Types.ObjectId);
+            // creating Remaining Participants
+            participantIds = await createParticipants({ participants: remainingParticipants, tournamentID, gameType, sportID, sportName: tournamentDetails?.sportName }, session);
+            participantIds = [...knockoutFormatDetails.participants, ...participantIds];
+            const totalRounds = Math.ceil(Math.log2(participantIds.length)); // possible number of rounds
+            const roundNames = getRoundNames(participantIds.length, totalRounds); // getting round names
 
-        tournamentDetails.totalParticipants = allParticipantIds?.length;
-        KnockoutFormat.rounds = roundsIds;
-        KnockoutFormat.roundNames = roundNames;
-        KnockoutFormat.totalParticipants = allParticipantIds?.length;
-        KnockoutFormat.participants = (allParticipantIds as unknown) as mongoose.Schema.Types.ObjectId[];
-        KnockoutFormat.rounds = roundsIds;
-        
-        KnockoutFormat = await KnockoutFormat.save({ session });
+            // Delete Existing Rounds and Matches
+            await roundModel
+                .deleteMany({
+                    tournamentID: tournamentDetails?._id,
+                    formatTypeID: tournamentDetails?.formatID,
+                })
+                .session(session);
+            await matchModel
+                .deleteMany({
+                    tournamentID: tournamentDetails?._id,
+                    formatID: tournamentDetails?.formatID,
+                })
+                .session(session);
 
-        tournamentDetails.formatID = KnockoutFormat?._id as mongoose.Schema.Types.ObjectId;
+            let roundsData = getBracketsRoundsAndMatches(participantIds.length);
+
+            let roundsPayload = roundsData?.map((round) => {
+                let obj = round?.roundNumber === 1 ? { participantsIds: participantIds as string[] } : {}
+                return {
+                    tournamentID: tourId as string,
+                    formatTypeID: knockoutFormatDetails?._id?.toString() as string,
+                    formatName: "knockout",
+                    formatRef: "knockout",
+                    fixingType,
+                    gameType,
+                    participantsRef: gameType === "team" ? "team" : "player",
+                    roundNumber: round?.roundNumber,
+                    roundName: round?.roundName as string,
+                    matches: round?.matches,
+                    brackets: "winners",
+                    scoreType: tournamentDetails?.scoreType as string,
+                    ...obj
+                };
+            });
+            await createRoundAndTheirMatches(roundsPayload, session);
+
+            const allRoundsAndMatches = await referencingMatchesToNextMatches(tourId as string, knockoutFormatDetails?._id?.toString() as string, "winners", session);
+
+            // const allRoundsAndMatches = allRoundsData;
+            const arrangedTeams = arrangingTeamsBasedOnFixingType(
+                data.fixingType,
+                (participantIds as unknown) as ObjectId[]
+            );
+
+            // assigning participants into round matches
+            let idx = 0;
+            for (let round = 0; round < allRoundsAndMatches.length; round++) {
+                if (allRoundsAndMatches[round]?.roundNumber === 1) {
+                    idx = round;
+                }
+            }
+            let index = 0;
+            let bulkMatchUpdates = [];
+            for (let match of allRoundsAndMatches[idx].matches) {
+                if (arrangedTeams && index < arrangedTeams.length) {
+                    let setObj: { participantA: mongoose.Schema.Types.ObjectId, participantB?: mongoose.Schema.Types.ObjectId } = { participantA: arrangedTeams[index] }
+                    match.participantA = arrangedTeams[index];
+                    if (index + 1 < arrangedTeams.length) {
+                        match.participantB = arrangedTeams[index + 1];
+                        setObj.participantB = arrangedTeams[index + 1];
+                        index += 2;
+                    }
+                    bulkMatchUpdates.push({
+                        updateOne: {
+                            filter: { _id: match?._id },
+                            update: { $set: setObj }
+                        }
+                    })
+                    // match = await (match as mongoose.Document & IMatch).save({ session });
+                }
+            }
+            const result3 = await matchModel.bulkWrite(bulkMatchUpdates, { session });
+            if (!_.isEmpty(result3) && (result3?.matchedCount !== bulkMatchUpdates?.length || result3?.modifiedCount !== bulkMatchUpdates?.length)) {
+                throw new AppError(statusCodes.BAD_REQUEST, "Failed to Update Match Participants.")
+            }
+            knockoutFormatDetails.participants = (participantIds as unknown) as mongoose.Schema.Types.ObjectId[];
+            knockoutFormatDetails.totalParticipants = participantIds.length;
+            const allRounds = allRoundsAndMatches;
+            if (_.isEmpty(allRounds)) {
+                throw new AppError(statusCodes.BAD_REQUEST, "Rounds and their Matches not found.");
+            }
+            let roundsIds = allRounds?.map((round) => (round?._id as unknown) as mongoose.Schema.Types.ObjectId);
+            knockoutFormatDetails.rounds = roundsIds;
+            knockoutFormatDetails.roundNames = roundNames;
+            knockoutFormatDetails.fixingType = fixingType;
+            tournamentDetails.fixingType = fixingType;
+            tournamentDetails.totalParticipants = participantIds.length;
+            tournamentDetails.formatID = knockoutFormatDetails?._id as mongoose.Schema.Types.ObjectId;
+        } else if (data?.fixingType !== tournamentDetails?.fixingType) {
+            await roundModel
+                .updateMany(
+                    { tournamentID: tournamentDetails?._id },
+                    { fixingType: data.fixingType },
+                    { runValidators: true }
+                )
+                .session(session);
+            let rounds = await roundModel
+                .find({ tournamentID: tournamentDetails?._id })
+                .populate<{ matches: IMatch[] }>("matches")
+                .session(session);
+            rounds = rounds?.filter((round) => round.roundNumber === 1);
+            let round1 = rounds[0];
+
+            let participantsIds = [...knockoutFormatDetails.participants];
+            const arrangedTeams = arrangingTeamsBasedOnFixingType(
+                data.fixingType,
+                participantsIds
+            );
+
+            // assigning participants into round matches
+            let index = 0;
+            const bulkUpdatesParticipants = [];
+            for (let match of round1.matches) {
+                if (index < arrangedTeams.length) {
+                    match.participantA = arrangedTeams[index];
+                    if (index + 1 < arrangedTeams.length) {
+                        match.participantB = arrangedTeams[index + 1];
+                        index += 2;
+                    }
+                    // match = await match.save({ session });
+                    bulkUpdatesParticipants.push({
+                        updateOne: {
+                            filter: { _id: match?._id },
+                            update: { $set: { participantA: match?.participantA, participantB: match?.participantB } },
+                        },
+                    })
+                }
+            }
+            if (bulkUpdatesParticipants.length > 0) {
+                await matchModel.bulkWrite(bulkUpdatesParticipants, {
+                    session: session,
+                    runValidators: true,
+                } as object);
+            }
+            knockoutFormatDetails.fixingType = data.fixingType;
+            tournamentDetails.fixingType = data.fixingType;
+        }
+        // 5. Updating Tournament Details
+        knockoutFormatDetails = await knockoutFormatDetails.save({ session });
         tournamentDetails = await tournamentDetails.save({ session });
-
         await session.commitTransaction();
         await session.endSession();
-        return tournamentDetails;
+        return tournamentDetails
     } catch (error) {
         await session.abortTransaction();
         await session.endSession();
         const { statusCode, message } = catchErrorMsgAndStatusCode(error);
-        console.log("Error in add participant knockout service : ", message);
+        console.log("Error in edit knockout tournament : ", message);
         throw new AppError(statusCode, message);
     }
 }
 
-export default addParticipantInKnockoutFormatAndReArrangeTournament;
+export default editKnockoutTournament;
+
+
+
+
+
+
+
+
+

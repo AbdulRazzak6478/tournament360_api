@@ -1,15 +1,18 @@
-import mongoose, { ClientSession, ObjectId } from "mongoose";
-import AppError from "../../../utils/appError.js";
-import catchErrorMsgAndStatusCode from "../../../utils/catchError.js"
-import TournamentModel from "../../../models/tournament.model.js";
-import KnockoutModel from "../../../models/knockoutFormat.model.js";
-import AppErrorCode from "../../../constants/appErrorCode.js";
-import statusCodes from "../../../constants/statusCodes.js";
+import { ObjectId } from "mongoose";
+import statusCodes from "../../../constants/statusCodes";
+import matchModel, { IMatch } from "../../../models/match.model";
+import AppError from "../../../utils/appError";
+import catchErrorMsgAndStatusCode from "../../../utils/catchError";
+import mongoose from "mongoose";
+import roundModel from "../../../models/round.model";
+import { ClientSession } from "mongoose";
+import AppErrorCode from "../../../constants/appErrorCode";
 import _ from "lodash";
-import roundModel from "../../../models/round.model.js";
-import matchModel, { IMatch } from "../../../models/match.model.js";
-import teamModel, { ITeam } from "../../../models/team.model.js";
-import playerModel, { IPlayer } from "../../../models/player.model.js";
+import TournamentModel from "../../../models/tournament.model";
+import KnockoutModel from "../../../models/knockoutFormat.model";
+import teamModel from "../../../models/team.model";
+import playerModel from "../../../models/player.model";
+
 
 const getRoundNames = (participants: number, totalRounds: number) => {
     let roundNames = [];
@@ -381,32 +384,36 @@ const arrangingTeamsBasedOnFixingType = (fixingType: string, participants: Objec
         throw new AppError(statusCode, message);
     }
 };
-const addParticipantInKnockoutFormatAndReArrangeTournament = async (tournamentID: string, participantName: string) => {
+
+
+const removeKnockoutTournamentParticipant = async (tournamentID: string, participantID: string) => {
     const session = await mongoose.startSession();
     try {
         session.startTransaction();
+        // 1. fetch tournament and Its format
 
-        let tournamentDetails = await TournamentModel
-            .findById(tournamentID)
-            .session(session);
+        let tournamentDetails = await TournamentModel.findById(tournamentID).session(session);
         if (_.isEmpty(tournamentDetails)) {
-            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotFound("Tournament"));
+            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotExist("Tournament"))
         }
-        let KnockoutFormat = await KnockoutModel
-            .findById(tournamentDetails?.formatID)
-            .session(session);
-        if (_.isEmpty(KnockoutFormat)) {
-            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotFound("Knockout Format"));
+        let knockoutFormat = await KnockoutModel.findById(tournamentDetails?.formatID).session(session);
+        if (_.isEmpty(knockoutFormat)) {
+            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotExist("Knockout Format"))
         }
-
-        let isWinnerDeclared = false;
-        if (tournamentDetails?.status !== "PENDING") {
-            isWinnerDeclared = true;
+        // 2. validate participant exist or not
+        if (tournamentDetails?.gameType === "team") {
+            if (
+                !knockoutFormat?.participants
+                    ?.map((id) => id.toString())
+                    .includes(participantID?.toString())
+            ) {
+                throw new AppError(
+                    statusCodes.BAD_REQUEST,
+                    AppErrorCode.fieldNotExist("Participant")
+                );
+            }
         }
-        if (isWinnerDeclared) {
-            throw new AppError(statusCodes.BAD_REQUEST, `Can't Add Participants. Tournament is ${tournamentDetails?.status === "ACTIVE" ? "STARTED" : tournamentDetails?.status}`);
-        }
-
+        // 3. Delete Rounds and matches
         await roundModel
             .deleteMany({
                 tournamentID: tournamentDetails?._id,
@@ -417,63 +424,45 @@ const addParticipantInKnockoutFormatAndReArrangeTournament = async (tournamentID
                 tournamentID: tournamentDetails?._id,
             })
             .session(session);
-
-
-        let tournamentId = tournamentDetails?._id?.toString();
+        // 4. Delete participant
+        let tourID = tournamentDetails?._id?.toString();
         let allParticipantIds: string[] = [];
-        const participantObj = {
-            tournamentID: tournamentId,
-            participantNumber: tournamentDetails?.totalParticipants + 1,
-            sportID: tournamentDetails?.sportID,
-            sportName: "",
-            name: participantName,
-        }
-        if (tournamentDetails?.gameType === 'team') {
-            let newParticipant: ITeam[] = await teamModel.create([participantObj], {
-                session: session,
-            });
-            if (_.isEmpty(newParticipant)) {
-                throw new AppError(statusCodes.BAD_REQUEST, "Team Creation Failed.");
-            }
+        if (tournamentDetails?.gameType === "team") {
+            await teamModel
+                .findByIdAndDelete(participantID)
+                .session(session);
             const teams = await teamModel
-                .find({ tournamentID: tournamentId })
-                .session(session).lean();
+                .find({ tournamentID: tourID })
+                .session(session);
             if (_.isEmpty(teams)) {
                 throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotFound("Teams"));
             }
-            let sportName = teams?.[0]?.sportName;
-            await teamModel.findByIdAndUpdate(newParticipant?.[0]?._id, { sportName });
-            allParticipantIds = teams?.map((team) => team?._id?.toString());
+            allParticipantIds = teams?.map((team) => team?._id?.toString() as string);
         }
-        if (tournamentDetails?.gameType === 'individual') {
-            let newParticipant: IPlayer[] = await playerModel.create([participantObj], {
-                session: session,
-            });
-            if (_.isEmpty(newParticipant)) {
-                throw new AppError(statusCodes.BAD_REQUEST, "Player Creation Failed.");
-            }
+        // gameType == individual
+        if (tournamentDetails?.gameType === "individual") {
+            await playerModel
+                .findByIdAndDelete(participantID)
+                .session(session);
             const players = await playerModel
-                .find({ tournamentID: tournamentId })
-                .session(session).lean();
+                .find({ tournamentID: tourID })
+                .session(session);
             if (_.isEmpty(players)) {
                 throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotFound("Players"));
             }
-            let sportName = players?.[0]?.sportName;
-            await teamModel.findByIdAndUpdate(newParticipant?.[0]?._id, { sportName });
-            allParticipantIds = players?.map((player) => player?._id?.toString());
+            allParticipantIds = players?.map((player) => player?._id?.toString() as string);
         }
-
+        // 5. Calculate Total rounds and there matches with new participant length
         let totalRounds = Math.ceil(Math.log2(allParticipantIds?.length));
         let roundNames = getRoundNames(allParticipantIds?.length, totalRounds);
 
-
-        let roundsData = getBracketsRoundsAndMatches(allParticipantIds?.length);
+        const roundsData = getBracketsRoundsAndMatches(allParticipantIds?.length);
 
         let roundsPayload = roundsData?.map((round) => {
             let obj = round?.roundNumber === 1 ? { participantsIds: allParticipantIds as string[] } : {}
             return {
-                tournamentID: tournamentId as string,
-                formatTypeID: KnockoutFormat?._id?.toString() as string,
+                tournamentID: tourID as string,
+                formatTypeID: knockoutFormat?._id?.toString() as string,
                 formatName: "knockout",
                 formatRef: "knockout",
                 fixingType: tournamentDetails?.fixingType as string,
@@ -487,18 +476,17 @@ const addParticipantInKnockoutFormatAndReArrangeTournament = async (tournamentID
                 ...obj
             };
         });
-
+        // 6. create rounds and their matches
         await createRoundAndTheirMatches(roundsPayload, session);
 
-        const allRoundsAndMatches = await referencingMatchesToNextMatches(tournamentId as string, KnockoutFormat?._id?.toString() as string, "winners", session);
+        // 7. Attach match referencing and placeholder to next matches
+        const allRoundsAndMatches = await referencingMatchesToNextMatches(tourID as string, knockoutFormat?._id?.toString() as string, "winners", session);
 
-        // const allRoundsAndMatches = allRoundsData;
+        // 8. Arrange Participant and Assign Into round
         const arrangedTeams = arrangingTeamsBasedOnFixingType(
             tournamentDetails?.fixingType,
             (allParticipantIds as unknown) as ObjectId[]
         );
-
-        // assigning participants into round matches
         let idx = 0;
         for (let round = 0; round < allRoundsAndMatches.length; round++) {
             if (allRoundsAndMatches[round]?.roundNumber === 1) {
@@ -535,28 +523,28 @@ const addParticipantInKnockoutFormatAndReArrangeTournament = async (tournamentID
         }
         let roundsIds = allRounds?.map((round) => (round?._id as unknown) as mongoose.Schema.Types.ObjectId);
 
+        // 9. update tournament data and return
         tournamentDetails.totalParticipants = allParticipantIds?.length;
-        KnockoutFormat.rounds = roundsIds;
-        KnockoutFormat.roundNames = roundNames;
-        KnockoutFormat.totalParticipants = allParticipantIds?.length;
-        KnockoutFormat.participants = (allParticipantIds as unknown) as mongoose.Schema.Types.ObjectId[];
-        KnockoutFormat.rounds = roundsIds;
-        
-        KnockoutFormat = await KnockoutFormat.save({ session });
+        knockoutFormat.rounds = roundsIds;
+        knockoutFormat.roundNames = roundNames;
+        knockoutFormat.totalParticipants = allParticipantIds?.length;
+        knockoutFormat.participants = (allParticipantIds as unknown) as mongoose.Schema.Types.ObjectId[];
+        knockoutFormat.rounds = roundsIds;
 
-        tournamentDetails.formatID = KnockoutFormat?._id as mongoose.Schema.Types.ObjectId;
+        knockoutFormat = await knockoutFormat.save({ session });
+
+        tournamentDetails.formatID = knockoutFormat?._id as mongoose.Schema.Types.ObjectId;
         tournamentDetails = await tournamentDetails.save({ session });
 
         await session.commitTransaction();
         await session.endSession();
+
         return tournamentDetails;
     } catch (error) {
-        await session.abortTransaction();
-        await session.endSession();
         const { statusCode, message } = catchErrorMsgAndStatusCode(error);
-        console.log("Error in add participant knockout service : ", message);
+        console.log("Error in Remove knockout tournament participant : ", statusCode, message);
         throw new AppError(statusCode, message);
     }
 }
 
-export default addParticipantInKnockoutFormatAndReArrangeTournament;
+export default removeKnockoutTournamentParticipant;

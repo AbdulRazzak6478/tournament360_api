@@ -1,11 +1,10 @@
-import AppErrorCode from "../constants/appErrorCode.js";
 
 class AppError extends Error {
     public statusCode: number;
     public message: string;
     public errorCode : string | undefined;
 
-    constructor(statusCode: number, message: string,errorCode ? : AppErrorCode) {
+    constructor(statusCode: number, message: string,errorCode ? : string) {
         super(message);
         this.statusCode = statusCode;
         this.message = message;

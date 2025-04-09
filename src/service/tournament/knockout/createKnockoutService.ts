@@ -300,6 +300,7 @@ const referencingMatchesToNextMatches = async (
                 if (typeof match === "object" && "_id" in match) {
                     return match._id.toString(); // It's a populated match object
                 }
+                // return match?._id?.toString();
             });
             roundMatchIdsMap.set(round.roundNumber, matchArray);
         });
@@ -489,6 +490,7 @@ const tournamentKnockoutFormatCreation = async (payload: payloadType) => {
             tournamentID,
             gameType,
             sportID: tournamentSport?._id,
+            sportName:tournamentSport?.name,
             formatName: formatType,
             totalParticipants: participants,
             fixingType,
@@ -582,41 +584,41 @@ const tournamentKnockoutFormatCreation = async (payload: payloadType) => {
                 idx = round;
             }
         }
-        let index = 0;
-        let bulkMatchUpdates = [];
-        for (let match of allRoundsAndMatches[idx].matches) {
-            if (arrangedTeams && index < arrangedTeams.length) {
-                let setObj: { participantA: mongoose.Schema.Types.ObjectId, participantB?: mongoose.Schema.Types.ObjectId } = { participantA: arrangedTeams[index] }
-                match.participantA = arrangedTeams[index];
-                if (index + 1 < arrangedTeams.length) {
-                    match.participantB = arrangedTeams[index + 1];
-                    setObj.participantB = arrangedTeams[index + 1];
-                    index += 2;
-                }
-                bulkMatchUpdates.push({
-                    updateOne: {
-                        filter: { _id: match?._id },
-                        update: { $set: setObj }
+            let index = 0;
+            let bulkMatchUpdates = [];
+            for (let match of allRoundsAndMatches[idx].matches) {
+                if (arrangedTeams && index < arrangedTeams.length) {
+                    let setObj: { participantA: mongoose.Schema.Types.ObjectId, participantB?: mongoose.Schema.Types.ObjectId } = { participantA: arrangedTeams[index] }
+                    match.participantA = arrangedTeams[index];
+                    if (index + 1 < arrangedTeams.length) {
+                        match.participantB = arrangedTeams[index + 1];
+                        setObj.participantB = arrangedTeams[index + 1];
+                        index += 2;
                     }
-                })
-                // match = await (match as mongoose.Document & IMatch).save({ session });
+                    bulkMatchUpdates.push({
+                        updateOne: {
+                            filter: { _id: match?._id },
+                            update: { $set: setObj }
+                        }
+                    })
+                    // match = await (match as mongoose.Document & IMatch).save({ session });
+                }
             }
-        }
-        const result3 = await matchModel.bulkWrite(bulkMatchUpdates, { session });
-        if (!_.isEmpty(result3) && (result3?.matchedCount !== bulkMatchUpdates?.length || result3?.modifiedCount !== bulkMatchUpdates?.length)) {
-            throw new AppError(statusCodes.BAD_REQUEST, "Failed to Update Match Participants.")
-        }
-        console.log("bulk matches : ", result3);
-        const allRounds = allRoundsAndMatches;
-        if (_.isEmpty(allRounds)) {
-            throw new AppError(statusCodes.BAD_REQUEST, "Rounds and their Matches not found.");
-        }
-        let roundsIds = allRounds?.map((round) => (round?._id as unknown) as mongoose.Schema.Types.ObjectId);
-        knockoutFormat.rounds = roundsIds;
-        knockoutFormat = await knockoutFormat.save({ session });
+            const result3 = await matchModel.bulkWrite(bulkMatchUpdates, { session });
+            if (!_.isEmpty(result3) && (result3?.matchedCount !== bulkMatchUpdates?.length || result3?.modifiedCount !== bulkMatchUpdates?.length)) {
+                throw new AppError(statusCodes.BAD_REQUEST, "Failed to Update Match Participants.")
+            }
+            console.log("bulk matches : ", result3);
+            const allRounds = allRoundsAndMatches;
+            if (_.isEmpty(allRounds)) {
+                throw new AppError(statusCodes.BAD_REQUEST, "Rounds and their Matches not found.");
+            }
+            let roundsIds = allRounds?.map((round) => (round?._id as unknown) as mongoose.Schema.Types.ObjectId);
+            knockoutFormat.rounds = roundsIds;
+            knockoutFormat = await knockoutFormat.save({ session });
 
-        tournamentDetails.formatID = knockoutFormat?._id as mongoose.Schema.Types.ObjectId;
-        tournamentDetails = await tournamentDetails.save({ session });
+            tournamentDetails.formatID = knockoutFormat?._id as mongoose.Schema.Types.ObjectId;
+            tournamentDetails = await tournamentDetails.save({ session });
 
         await session.commitTransaction();
         await session.endSession();

@@ -11,6 +11,7 @@ export interface ITournament extends Document {
     formatID: mongoose.Schema.Types.ObjectId;
     sportID: mongoose.Schema.Types.ObjectId;
     totalParticipants:number;
+    sportName: string;
     formatName: string;
     formatRef: string;
     fixingType: string;
@@ -52,6 +53,10 @@ const TournamentSchema = new Schema<ITournament>({
         ref: "Sport",
         default: null,
         index: true
+    },
+    sportName: {
+        type: String,
+        required: true,
     },
     formatRef: {
         type: String,
