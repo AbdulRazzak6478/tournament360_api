@@ -2,6 +2,8 @@ import { Router } from "express";
 import { auth, getUserRole, verifyAdmin, verifySubAdmin, verifyUserAccess } from "../middlewares/auth.js";
 import sportController from "../controllers/sportController.js";
 import createTournament from "../controllers/tournament/createTournamentController.js";
+import getGameFixturesController from "../controllers/tournament/gameFixturesController.js";
+import updateMatchWinnerController from "../controllers/tournament/updateMatchWinnerController.js";
 
 
 const router = Router();
@@ -53,5 +55,23 @@ router.post(
     // verifyUserAccess("CREATE TOURNAMENT"),
     createTournament
 );
+
+// Get tournament Game Fixtures
+router.get(
+    "/game-fixtures/:tournamentID",
+    // auth,
+    // getUserRole,
+    // verifyUserAccess("GET TOURNAMENT GAME FIXTURES"),
+    getGameFixturesController
+);
+
+// Announce Tournament Match Winner
+router.patch(
+    "/match/announce-winner/:tournamentID",
+    // auth,
+    // getUserRole,
+    // verifyUserAccess("ANNOUNCE TOURNAMENT MATCH WINNER"),
+    updateMatchWinnerController
+)
 
 export default router;

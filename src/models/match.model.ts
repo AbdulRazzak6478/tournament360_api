@@ -28,7 +28,7 @@ export interface IMatch extends Document {
     timing: Date;
     dateOfPlay: Date;
     status: string;
-    isComplete: boolean;
+    isCompleted: boolean;
     refereeID: mongoose.Schema.Types.ObjectId;
     sportRef: string;
     sportRefID: mongoose.Schema.Types.ObjectId;
@@ -102,7 +102,7 @@ const matchSchema: Schema<IMatch> = new Schema<IMatch>({
         type: String,
         required: true,
         enum: scoreTypeEnums,
-        default: 'Top Score',
+        // default: 'Top Score',
     },
     noOfSets: {
         type: Number,
@@ -125,7 +125,7 @@ const matchSchema: Schema<IMatch> = new Schema<IMatch>({
         default: null,
     },
     status: { type: String, enum: ["PENDING", "SCHEDULED", "ONGOING", "COMPLETED"], default: "PENDING" },
-    isComplete: {
+    isCompleted: {
         type: Boolean,
         default: false
     },

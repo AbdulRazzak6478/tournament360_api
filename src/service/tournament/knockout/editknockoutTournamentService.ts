@@ -132,7 +132,7 @@ const createRoundAndTheirMatches = async (roundsData: roundType[], session: Clie
                 formatRef: roundData.formatRef,
                 fixingType: roundData.fixingType,
                 participantsRef: roundData?.participantsRef,
-                brackets: roundData.brackets,
+                bracket: roundData.brackets,
                 gameType: roundData.gameType,
                 participants: [] as mongoose.Schema.Types.ObjectId[],
                 matches: [] as mongoose.Schema.Types.ObjectId[]
@@ -151,7 +151,7 @@ const createRoundAndTheirMatches = async (roundsData: roundType[], session: Clie
             let allMatches = [];
             let matchIds = [];
             for (let matchData of roundMatches) {
-                const str = roundPayload?.brackets === "winners" ? "K1" : roundPayload?.brackets === "losers" ? "K2" : "K3";
+                const str = roundPayload?.bracket === "winners" ? "K1" : roundPayload?.bracket === "losers" ? "K2" : "K3";
                 const matchObj = {
                     _id: new mongoose.Types.ObjectId(), // Manually generate _id
                     name: "Match #" + str + "R" + roundPayload?.roundNumber + "M" + matchData,
@@ -468,6 +468,12 @@ const editKnockoutTournament = async (data: dataType) => {
         if (_.isEmpty(knockoutFormatDetails)) {
             throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotExist("Knockout Format"))
         }
+        if (tournamentDetails?.gameType !== gameType) {
+            throw new AppError(statusCodes.BAD_REQUEST, "gameType Cannot be Change.")
+        }
+        if (tournamentDetails?.formatName !== formatType) {
+            throw new AppError(statusCodes.BAD_REQUEST, "formatType Cannot be Change.")
+        }
         // 2. Update SportID Into Tournament
         if (sportID !== tournamentDetails?.sportID?.toString()) {
             let tournamentSport = await Sport.findById(sportID).session(session);
@@ -516,15 +522,9 @@ const editKnockoutTournament = async (data: dataType) => {
                     .session(session);
             }
         }
-        if (tournamentDetails?.gameType !== gameType) {
-            throw new AppError(statusCodes.BAD_REQUEST, "gameType Cannot be Change.")
-        }
-        if (tournamentDetails?.formatName !== formatType) {
-            throw new AppError(statusCodes.BAD_REQUEST, "formatType Cannot be Change.")
-        }
-        if (data.gameType !== tournamentDetails?.gameType?.toString()) {
-            throw new Error(", tournament gameType cannot change");
-        }
+        // if (data.gameType !== tournamentDetails?.gameType?.toString()) {
+        //     throw new Error(", tournament gameType cannot change");
+        // }
         // 3. Save Tournament Details
         if (tournamentDetails.tournamentName !== Name) {
             tournamentDetails.tournamentName = Name;
@@ -667,8 +667,10 @@ const editKnockoutTournament = async (data: dataType) => {
                 .session(session);
             let rounds = await roundModel
                 .find({ tournamentID: tournamentDetails?._id })
-                .populate<{ matches: IMatch[] }>("matches")
-                .session(session);
+                .select("roundNumber")
+                .populate<{ matches: IMatch[] }>({ path: "matches", select: "participantA participantB" })
+                .session(session)
+                .lean();
             rounds = rounds?.filter((round) => round.roundNumber === 1);
             let round1 = rounds[0];
 
@@ -682,17 +684,26 @@ const editKnockoutTournament = async (data: dataType) => {
             let index = 0;
             const bulkUpdatesParticipants = [];
             for (let match of round1.matches) {
+
                 if (index < arrangedTeams.length) {
-                    match.participantA = arrangedTeams[index];
+                    let setObj: {
+                        participantA: mongoose.Schema.Types.ObjectId,
+                        participantB?: mongoose.Schema.Types.ObjectId
+                    } = { participantA: arrangedTeams[index] };
+                    // match.participantA = new mongoose.Schema.Types.ObjectId(arrangedTeams[index]);
+                    // match.participantA = new mongoose.Types.ObjectId(arrangedTeams[index]);;
+                    // let participantA = arrangedTeams[index] as mongoose.Schema.Types.ObjectId;
+                    // match.participantA = arrangedTeams[index];
                     if (index + 1 < arrangedTeams.length) {
-                        match.participantB = arrangedTeams[index + 1];
+                        // match.participantB = arrangedTeams[index + 1];
+                        setObj.participantB = arrangedTeams[index + 1];
                         index += 2;
                     }
                     // match = await match.save({ session });
                     bulkUpdatesParticipants.push({
                         updateOne: {
                             filter: { _id: match?._id },
-                            update: { $set: { participantA: match?.participantA, participantB: match?.participantB } },
+                            update: { $set: setObj },
                         },
                     })
                 }

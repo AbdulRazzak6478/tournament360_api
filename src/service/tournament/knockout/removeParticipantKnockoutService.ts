@@ -132,7 +132,7 @@ const createRoundAndTheirMatches = async (roundsData: roundType[], session: Clie
                 formatRef: roundData.formatRef,
                 fixingType: roundData.fixingType,
                 participantsRef: roundData?.participantsRef,
-                brackets: roundData.brackets,
+                bracket: roundData.brackets,
                 gameType: roundData.gameType,
                 participants: [] as mongoose.Schema.Types.ObjectId[],
                 matches: [] as mongoose.Schema.Types.ObjectId[]
@@ -151,7 +151,7 @@ const createRoundAndTheirMatches = async (roundsData: roundType[], session: Clie
             let allMatches = [];
             let matchIds = [];
             for (let matchData of roundMatches) {
-                const str = roundPayload?.brackets === "winners" ? "K1" : roundPayload?.brackets === "losers" ? "K2" : "K3";
+                const str = roundPayload?.bracket === "winners" ? "K1" : roundPayload?.bracket === "losers" ? "K2" : "K3";
                 const matchObj = {
                     _id: new mongoose.Types.ObjectId(), // Manually generate _id
                     name: "Match #" + str + "R" + roundPayload?.roundNumber + "M" + matchData,
@@ -541,6 +541,8 @@ const removeKnockoutTournamentParticipant = async (tournamentID: string, partici
 
         return tournamentDetails;
     } catch (error) {
+        await session.abortTransaction();
+        await session.endSession();
         const { statusCode, message } = catchErrorMsgAndStatusCode(error);
         console.log("Error in Remove knockout tournament participant : ", statusCode, message);
         throw new AppError(statusCode, message);

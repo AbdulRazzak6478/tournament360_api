@@ -13,7 +13,7 @@ export interface IRound extends Document {
     gameType: string;
     roundNumber: number;
     roundName: string;
-    brackets: string;
+    bracket: string;
     participants: mongoose.Schema.Types.ObjectId[];
     matches: mongoose.Schema.Types.ObjectId[] | IMatch[];
     winners: mongoose.Schema.Types.ObjectId[];
@@ -61,7 +61,7 @@ const roundSchema: Schema<IRound> = new Schema<IRound>({
         type: String,
         required: true,
     },
-    brackets: {
+    bracket: {
         type: String,
         enum: ['winners', 'losers', 'final bracket'],
         default: 'winners'

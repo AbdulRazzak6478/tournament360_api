@@ -66,7 +66,6 @@ const TournamentSchema = new Schema<ITournament>({
         type: String,
         required: true,
         enum: formatNameEnums,
-        default: ""
     },
     fixingType: {
         type: String,

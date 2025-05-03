@@ -14,10 +14,15 @@ const  AppErrorCode = {
     participantsRange : "Participants range: 5 to 50.",
     sportNotFound : "Sport Not Found",
     unableToCreateTournament : "Unable to Create Tournament.",
+    matchResultAlreadySet : "Match Result Already Set — Cannot Declare Again",
+    invalidWinnerSelection : "Invalid Winner Selection",
     notAbleToCreateField : (field:string)=>(`Not Able to Create ${field}.`),
     fieldNotFound : (field:string)=>(`${field} Not Found.`),
     fieldNotExist:(field:string)=>(`${field} Not Exist.`),
-    validFieldObjectIdIsRequired:(field:string)=>(`Valid ${field} ObjectId is required.`)
+    fieldIsRequired:(field:string)=>(`${field} is required.`),
+    validFieldObjectIdIsRequired:(field:string)=>(`Valid ${field} as ObjectId is required.`),
+    winnerNotDeclaredForField: (field:string)=>(`Winner Not Declared for ${field}.`),
+    fieldMustBeaValidObjectId : (field:string)=>(`${field} Must Be A Valid ObjectId`)
 }
 
 export default AppErrorCode;
