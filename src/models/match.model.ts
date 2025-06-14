@@ -73,7 +73,7 @@ const matchSchema: Schema<IMatch> = new Schema<IMatch>({
     },
     bracket: {
         type: String,
-        enum: ['winners', 'losers', 'Final bracket'],
+        enum: ['winners', 'losers', 'Final Bracket'],
         required: true,
     },
     gameTypeRef: {

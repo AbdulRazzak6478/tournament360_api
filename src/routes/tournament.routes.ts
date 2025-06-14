@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { auth, getUserRole, verifyAdmin, verifySubAdmin, verifyUserAccess } from "../middlewares/auth.js";
-import sportController from "../controllers/sportController.js";
-import createTournament from "../controllers/tournament/createTournamentController.js";
-import getGameFixturesController from "../controllers/tournament/gameFixturesController.js";
-import updateMatchWinnerController from "../controllers/tournament/updateMatchWinnerController.js";
+import sportController from "../controllers/sport.controller.js";
+import createTournament from "../controllers/tournament/createTournament.controller.js";
+import getGameFixturesController from "../controllers/tournament/gameFixtures.controller.js";
+import updateMatchWinnerController from "../controllers/tournament/updateMatchWinner.controller.js";
 
 
 const router = Router();

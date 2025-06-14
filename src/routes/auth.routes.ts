@@ -1,5 +1,5 @@
 import { Router } from "express";
-import registerController from "../controllers/register-controller.js";
+import registerController from "../controllers/register.controller.js";
 import { auth, getUserRole, verifyAdmin, verifyUserAccess } from "../middlewares/auth.js";
 
 const router = Router();
@@ -36,7 +36,7 @@ router.post('/reset-password', registerController.resetPasswordUpdate);
 
 // ****************************************************************************************
 
-router.get('/test', auth, getUserRole,verifyUserAccess("CREATE"));
+router.get('/test', auth, getUserRole, verifyUserAccess("CREATE"));
 
 
 export default router;

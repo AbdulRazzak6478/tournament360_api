@@ -7,6 +7,7 @@ import { createTournamentSchema } from "../../utils/tournamentValidation.js";
 import AppError from "../../utils/appError.js";
 import AppErrorCode from "../../constants/appErrorCode.js";
 import tournamentKnockoutFormatCreation from "../../service/tournament/knockout/createKnockoutService.js";
+import tournamentDoubleKnockoutFormatCreation from "../../service/tournament/doubleKnockout/createDoubleKnockoutTournament.js";
 
 
 const createTournament = catchAsync(async (req, res) => {
@@ -60,10 +61,10 @@ const createTournament = catchAsync(async (req, res) => {
             ) {
                 throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.participantsRange)
             }
-            // responseData = await createDoubleEliminationTournament(data);
-            responseData = {
-                message: "work in progress for double_elimination_bracket",
-            };
+            responseData = await tournamentDoubleKnockoutFormatCreation(data);
+            // responseData = {
+            //     message: "work in progress for double_elimination_bracket",
+            // };
         }
         if (data.formatType.toLowerCase() === "round_robbin") {
             if (data.participants < round_robbin_format.min || data.participants > round_robbin_format.max) {

@@ -23,7 +23,11 @@ export const schemaValidation = async (
                     failed_response(
                         statusCodes.BAD_REQUEST,
                         "Yup validation failed",
-                        { message: error?.errors?.[0] || error?.message, errors: error?.errors || [] },
+                        {
+                            status: "Please check the highlighted fields.",
+                            message: error?.errors?.[0] || error?.message,
+                            errors: error?.errors || []
+                        },
                         false
                     )
                 );

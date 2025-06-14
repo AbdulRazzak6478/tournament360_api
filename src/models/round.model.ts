@@ -4,6 +4,7 @@ import { IMatch } from "./match.model.js";
 
 
 export interface IRound extends Document {
+    _id: mongoose.Schema.Types.ObjectId;
     tournamentID: mongoose.Schema.Types.ObjectId;
     formatTypeID: mongoose.Schema.Types.ObjectId;
     participantsRef: string;
@@ -35,17 +36,17 @@ const roundSchema: Schema<IRound> = new Schema<IRound>({
     },
     formatRef: {
         type: String,
-        enum: ['knockout'],
+        enum: ['knockout', 'doubleKnockout'],
         required: true
     },
     formatName: {
         type: String,
-        enum:formatNameEnums,
-        required:true
+        enum: formatNameEnums,
+        required: true
     },
     fixingType: {
         type: String,
-        enum:fixingTypeEnums,
+        enum: fixingTypeEnums,
         required: true,
     },
     gameType: {
@@ -63,7 +64,7 @@ const roundSchema: Schema<IRound> = new Schema<IRound>({
     },
     bracket: {
         type: String,
-        enum: ['winners', 'losers', 'final bracket'],
+        enum: ['winners', 'losers', 'Final Bracket'],
         default: 'winners'
     },
     matches: [
@@ -75,7 +76,7 @@ const roundSchema: Schema<IRound> = new Schema<IRound>({
     participants: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            refPath: 'participantsRef',  
+            refPath: 'participantsRef',
         }
     ],
     winners: [

@@ -26,3 +26,9 @@ User
 - User Tournament Feed.
 - 
 
+Next 
+- Double Elimination
+- Round Robbin
+- Code Refactor
+- permissions
+

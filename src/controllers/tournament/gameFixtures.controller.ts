@@ -22,7 +22,7 @@ const getGameFixturesController = catchAsync(async (req, res) => {
         if (_.isEmpty(bracket)) {
             throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldIsRequired("bracket"));
         }
-        if (!['winners', 'losers', 'final bracket'].includes(bracket)) {
+        if (!['winners', 'losers', 'Final Bracket'].includes(bracket)) {
             throw new AppError(statusCodes.BAD_REQUEST, "bracket is invalid, it should be winners, losers or final bracket.");
         }
 
@@ -40,9 +40,13 @@ const getGameFixturesController = catchAsync(async (req, res) => {
             });
         }
         if (tournamentDetails?.formatName === "double_elimination_bracket") {
-            responseData = {
-                message: "work in progress for double_elimination_bracket",
-            }
+            responseData = await getKnockoutFixturesService({
+                tournamentId: tournamentDetails?._id as unknown as string,
+                bracket
+            });
+            // responseData = {
+            //     message: "work in progress for double_elimination_bracket",
+            // }
         }
         if (tournamentDetails?.formatName === "round_robbin") {
             responseData = {

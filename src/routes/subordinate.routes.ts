@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import subOrdinateController from '../controllers/SubOrdinate-controller.js';
+import subOrdinateController from '../controllers/SubOrdinate.controller.js';
 const router = Router();
 
 // create sub ordinate 

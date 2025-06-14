@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import InfoController from '../controllers/infoController.js';
+import InfoController from '../controllers/info.controller.js';
 import organizerRoutes from "./organizer.routes.js";
 import subordinateRoutes from "./subordinate.routes.js"
 import subAdminRoutes from "./subadmin.routes.js"

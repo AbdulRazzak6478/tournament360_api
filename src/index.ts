@@ -38,7 +38,7 @@ app.use("/auth",authRoutes);
 
 let port = env.PORT; // 4004
 app.listen(port, async() => {
+    await connectDB();
     console.log(`Server is running on http://localhost:${port}`);
     console.log("Server is started ");
-    await connectDB();
 });

@@ -1,6 +1,8 @@
 import mongoose, { Document } from "mongoose";
 
 interface IDoubleKnockout extends Document {
+
+    _id: mongoose.Schema.Types.ObjectId;
     tournamentID: mongoose.Schema.Types.ObjectId;
     formatName: string;
     fixingType: string;
@@ -18,10 +20,9 @@ interface IDoubleKnockout extends Document {
     // teams: mongoose.Schema.Types.ObjectId[];
     participants: mongoose.Schema.Types.ObjectId[];
     players: mongoose.Schema.Types.ObjectId[];
-    participantsRef:string;
+    participantsRef: string;
     createdAt: Date;
     updatedAt: Date;
-
 }
 const doubleKnockoutSchema = new mongoose.Schema(
     {
@@ -101,9 +102,9 @@ const doubleKnockoutSchema = new mongoose.Schema(
                 ref: "player",
             },
         ],
-        participantsRef:{
-            type:String,
-            default:"",
+        participantsRef: {
+            type: String,
+            default: "",
         }
     },
     { timestamps: true }
