@@ -1,71 +1,18 @@
+import { ObjectId } from "mongoose";
+import statusCodes from "../../../constants/statusCodes.js";
+import matchModel, { IMatch } from "../../../models/match.model.js";
 import AppError from "../../../utils/appError.js";
 import catchErrorMsgAndStatusCode from "../../../utils/catchError.js";
-import sportModel from "../../../models/sport.model.js";
-import _ from "lodash";
-import statusCodes from "../../../constants/statusCodes.js";
+import mongoose from "mongoose";
+import roundModel, { IRound } from "../../../models/round.model.js";
+import { ClientSession } from "mongoose";
 import AppErrorCode from "../../../constants/appErrorCode.js";
-import TournamentModel, { ITournament } from "../../../models/tournament.model.js";
-import mongoose, { ClientSession, HydratedDocument, ObjectId } from "mongoose";
+import _ from "lodash";
+import TournamentModel from "../../../models/tournament.model.js";
 import teamModel from "../../../models/team.model.js";
 import playerModel from "../../../models/player.model.js";
-import roundModel, { IRound } from "../../../models/round.model.js";
-import matchModel, { IMatch } from "../../../models/match.model.js";
 import doubleKnockoutModel from "../../../models/doubleKnockout.model.js";
 
-type participantsParamsType = {
-    participants: number,
-    tournamentID: string,
-    gameType: string,
-    sportID: string,
-    sportName: string,
-
-}
-
-const createParticipants = async (
-    { participants, tournamentID, gameType, sportID, sportName }: participantsParamsType,
-    session: ClientSession // Pass session as an argument
-) => {
-    try {
-        const participantsObjData: {
-            tournamentID: string;
-            sportID: string;
-            sportName: string;
-            participantNumber: number;
-            name: string;
-        }[] = [];
-
-        for (let i = 1; i <= participants; i++) {
-            participantsObjData.push({
-                tournamentID,
-                sportID,
-                sportName,
-                participantNumber: i,
-                name: gameType === "team" ? `Team #${i}` : `Player #${i}`,
-            });
-        }
-
-        let participantsArr = [];
-        if (gameType === "team") {
-            participantsArr = await teamModel.create(participantsObjData, { session });
-        }
-        else if (gameType === "individual") {
-            participantsArr = await playerModel.create(participantsObjData, { session });
-        } else {
-            throw new AppError(statusCodes.BAD_REQUEST, "Invalid gameType while creating Participants.");
-        }
-        if (_.isEmpty(participantsArr)) {
-            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.notAbleToCreateField(gameType === "team" ? "Teams" : "Players"));
-        }
-
-        participantsArr.sort((participant1, participant2) => participant1.participantNumber - participant2.participantNumber);
-        const participantsIds = participantsArr.map((participant) => participant?._id?.toString());
-
-        return participantsIds; // Return generated IDs 
-    } catch (error) {
-        const { statusCode, message } = catchErrorMsgAndStatusCode(error);
-        throw new AppError(statusCode, message);
-    }
-};
 
 type bracketType = {
     roundNumber: number;
@@ -425,13 +372,7 @@ const referencingMatchesToNextMatches = async (
         throw new AppError(statusCode, message);
     }
 };
-type payloadType = {
-    gameType: string,
-    participants: number,
-    formatType: string,
-    sportID: string,
-    fixingType: string
-}
+
 const arrangingTeamsBasedOnFixingType = (fixingType: string, participants: ObjectId[]) => {
     try {
         let arrangedParticipants: ObjectId[] = [];
@@ -656,145 +597,117 @@ const creatingFinalBracketRoundMatch = async (data: finalBracketPayload, session
         throw new AppError(statusCode, message);
     }
 };
-const tournamentDoubleKnockoutFormatCreation = async (payload: payloadType) => {
+
+
+const removeDoubleKnockoutTournamentParticipant = async (tournamentID: string, participantID: string) => {
     const session = await mongoose.startSession();
     try {
         session.startTransaction();
+        // 1. fetch tournament and Its format
 
-        // Step 1 : Extract the data fields from payload
-        const data = {
-            gameType: payload.gameType,
-            participants: +payload.participants,
-            formatType: payload.formatType,
-            sportID: payload.sportID,
-            fixingType: payload.fixingType,
-        };
-        const { gameType, participants, formatType, sportID, fixingType } = payload;
-
-
-        // Step 2 : Validate Sport is Exist or not
-        const tournamentSport = await sportModel.findById(sportID).select("name").lean();
-        if (_.isEmpty(tournamentSport)) {
-            throw new AppError(statusCodes.NOT_FOUND, AppErrorCode.fieldNotFound('Sport'));
+        let tournamentDetails = await TournamentModel.findById(tournamentID).session(session);
+        if (_.isEmpty(tournamentDetails)) {
+            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotExist("Tournament"))
         }
-
-        // Step 3 : Identify the scoreType for Tournament
-        let scoreType = "Top Score";
-        if (tournamentSport?.name?.toLowerCase() === "cricket") {
-            scoreType = "Cricket";
+        let doubleKnockoutFormat = await doubleKnockoutModel.findById(tournamentDetails?.formatID).session(session);
+        if (_.isEmpty(doubleKnockoutFormat)) {
+            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotExist("Double Knockout Format"))
         }
-        if (tournamentSport?.name?.toLowerCase() === "football") {
-            scoreType = "Football";
+        console.log("ids : ",doubleKnockoutFormat?.participants);
+        // 2. validate participant exist or not
+        if (tournamentDetails?.gameType === "team") {
+            if (
+                !doubleKnockoutFormat?.participants
+                    ?.map((id) => id.toString())
+                    .includes(participantID?.toString())
+            ) {
+                throw new AppError(
+                    statusCodes.BAD_REQUEST,
+                    AppErrorCode.fieldNotExist("Participant")
+                );
+            }
         }
-        const scoreTypes = [
-            "Top Score",
-            "Best Of",
-            "Race To",
-            "Cricket",
-            "Football",
-        ];
-
-        // Step 4 : Generate Tournament Id and Create Tournament
-
-        // 4.1 : Generate Tournament Id
-        const tournamentID = `TMT${Date.now()}`;
-
-        // 4.2 : Create Tournament
-        const tournamentPayload = {
-            tournamentID,
-            gameType,
-            sportID: tournamentSport?._id,
-            sportName: tournamentSport?.name,
-            formatName: formatType,
-            totalParticipants: participants,
-            fixingType,
-            formatRef: "doubleKnockout",
-            scoreType,
-            scoreTypes
+        // 3. Delete Rounds and matches
+        await roundModel
+            .deleteMany({
+                tournamentID: tournamentDetails?._id,
+            })
+            .session(session);
+        await matchModel
+            .deleteMany({
+                tournamentID: tournamentDetails?._id,
+            })
+            .session(session);
+        // 4. Delete participant
+        let tournamentId = tournamentDetails?._id?.toString();
+        let participantsIds: string[] = [];
+        if (tournamentDetails?.gameType === "team") {
+            await teamModel
+                .findByIdAndDelete(participantID)
+                .session(session);
+            const teams = await teamModel
+                .find({ tournamentID: tournamentId })
+                .select("_id name")
+                .session(session).lean();
+            if (_.isEmpty(teams)) {
+                throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotFound("Teams"));
+            }
+            participantsIds = teams?.map((team) => team?._id?.toString() as string);
         }
-
-        const tournamentDetailsArray: HydratedDocument<ITournament>[] = await TournamentModel.create(
-            [tournamentPayload],
-            { session }
-        );
-        if (_.isEmpty(tournamentDetailsArray)) {
-            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.unableToCreateTournament);
+        // gameType == individual
+        if (tournamentDetails?.gameType === "individual") {
+            await playerModel
+                .findByIdAndDelete(participantID)
+                .session(session);
+            const players = await playerModel
+                .find({ tournamentID: tournamentId })
+                .select("_id name")
+                .session(session).lean();
+            if (_.isEmpty(players)) {
+                throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotFound("Players"));
+            }
+            participantsIds = players?.map((player) => player?._id?.toString() as string);
         }
-        let tournamentDetails: HydratedDocument<ITournament> | null = tournamentDetailsArray?.[0] || null;
-
-
-        // Step 5 : Create Participants
-        const tourId = tournamentDetails?._id?.toString();
-        const participantPayload = {
-            participants,
-            tournamentID: tourId as string,
-            gameType,
-            sportID: tournamentSport?._id as string,
-            sportName: tournamentSport?.name
-        }
-        const participantsIds = await createParticipants(participantPayload, session);
-        if (_.isEmpty(participantsIds)) {
-            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.notAbleToCreateField('Participants'));
-        }
-
-        // Step 6 : Create Double Knockout Tournament
-        const doubleKnockoutPayload = {
-            tournamentID: tourId,
-            formatName: 'double_elimination_bracket',
-            fixingType,
-            gameType,
-            totalParticipants: participants,
-            participantRef: gameType === "team" ? "team" : "player",
-            participants: participantsIds
-        }
-
-        const doubleKnockoutArray = await doubleKnockoutModel.create(
-            [doubleKnockoutPayload],
-            { session }
-        );
-        if (_.isEmpty(doubleKnockoutArray)) {
-            throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.notAbleToCreateField("Double Knockout Format"));
-        }
-        let doubleKnockoutFormat = doubleKnockoutArray?.[0];
-
+        console.log("data : ", participantsIds);
+        tournamentDetails.totalParticipants = participantsIds.length;
 
         // Step 7 : Generate Brackets Round Data For winners, losers
-        const roundsData = getBracketsRoundsAndMatches(data.participants);
+        const roundsData = getBracketsRoundsAndMatches(participantsIds.length);
 
         // Step 8 : Create Rounds For Winners Bracket
         const winnersBracketPayload = roundsData?.winnersBrackets.map((round) => {
             const obj = round?.roundNumber === 1 ? { participantsIds: participantsIds as string[] } : {}
             return {
-                tournamentID: tourId as string,
+                tournamentID: tournamentId as string,
                 formatTypeID: doubleKnockoutFormat?._id?.toString() as string,
                 formatName: "double_elimination_bracket",
                 formatRef: "doubleKnockout",
-                fixingType,
-                gameType,
-                participantsRef: gameType === "team" ? "team" : "player",
+                fixingType: tournamentDetails?.fixingType as string,
+                gameType: tournamentDetails?.gameType as string,
+                participantsRef: tournamentDetails?.gameType === "team" ? "team" : "player",
                 roundNumber: round?.roundNumber,
                 roundName: round?.roundName as string,
                 matches: round?.matches,
                 brackets: "winners",
-                scoreType,
+                scoreType: tournamentDetails?.scoreType as string,
                 ...obj
             };
         });
         const losersBracketPayload = roundsData?.losersBrackets.map((round) => {
             // const obj = round?.roundNumber === 1 ? { participantsIds: participantsIds as string[] } : {}
             return {
-                tournamentID: tourId as string,
+                tournamentID: tournamentId as string,
                 formatTypeID: doubleKnockoutFormat?._id?.toString() as string,
                 formatName: "double_elimination_bracket",
                 formatRef: "doubleKnockout",
-                fixingType,
-                gameType,
-                participantsRef: gameType === "team" ? "team" : "player",
+                fixingType: tournamentDetails?.fixingType as string,
+                gameType: tournamentDetails?.gameType as string,
+                participantsRef: tournamentDetails?.gameType === "team" ? "team" : "player",
                 roundNumber: round?.roundNumber,
                 roundName: round?.roundName as string,
                 matches: round?.matches,
                 brackets: "losers",
-                scoreType,
+                scoreType: tournamentDetails?.scoreType as string,
             };
         });
 
@@ -803,10 +716,10 @@ const tournamentDoubleKnockoutFormatCreation = async (payload: payloadType) => {
 
         // Step 9 : add Referencing of next matches and Add Previous Match Placeholders
 
-        const allRoundsAndMatches = await referencingMatchesToNextMatches(tourId as string, doubleKnockoutFormat?._id?.toString() as string, "winners", session);
+        const allRoundsAndMatches = await referencingMatchesToNextMatches(tournamentId as string, doubleKnockoutFormat?._id?.toString() as string, "winners", session);
         // const allRoundsAndMatches = allRoundsData;
         const arrangedTeams = arrangingTeamsBasedOnFixingType(
-            data.fixingType,
+            tournamentDetails.fixingType,
             (participantsIds as unknown) as ObjectId[]
         );
 
@@ -846,7 +759,7 @@ const tournamentDoubleKnockoutFormatCreation = async (payload: payloadType) => {
         await createRoundAndTheirMatches(losersBracketPayload, session);
 
         // Step 12 : Add Referencing of Matches into Loser Bracket and Add Previous Match Placeholders
-        const losersBracketRounds = await referencingMatchesToNextMatches(tourId as string, doubleKnockoutFormat?._id?.toString() as string, "losers", session);
+        const losersBracketRounds = await referencingMatchesToNextMatches(tournamentId as string, doubleKnockoutFormat?._id?.toString() as string, "losers", session);
 
         // Step 13 : Assign Losers of Winners Bracket into losers Bracket
         const winnersRoundMatches = allRoundsAndMatches?.map((round) => ({ matches: round?.matches as IMatch[] }));
@@ -861,18 +774,18 @@ const tournamentDoubleKnockoutFormatCreation = async (payload: payloadType) => {
         // Create Final Bracket
         // Step 14 : Creating Final Round and match
         const finalObjData = {
-            tournamentID: tourId as string,
+            tournamentID: tournamentId as string,
             formatTypeID: doubleKnockoutFormat?._id,
             formatName: "double_elimination_bracket",
             formatRef: "doubleKnockout",
-            fixingType,
-            gameType,
-            participantsRef: gameType === "team" ? "team" : "player",
+            fixingType: tournamentDetails?.fixingType as string,
+            gameType: tournamentDetails?.gameType as string,
+            participantsRef: tournamentDetails?.gameType === "team" ? "team" : "player",
             roundNumber: 1,
             roundName: 'Final',
             matches: 1,
             brackets: "Final Bracket",
-            scoreType,
+            scoreType: tournamentDetails?.scoreType as string,
         };
         const finalBracketData = await creatingFinalBracketRoundMatch(
             finalObjData,
@@ -936,22 +849,17 @@ const tournamentDoubleKnockoutFormatCreation = async (payload: payloadType) => {
         doubleKnockoutFormat = await doubleKnockoutFormat.save({ session })
         tournamentDetails = await tournamentDetails.save({ session })
 
-        // Step 18 : return response Payload
-
-        console.log("Tournament Format Created Successfully");
-
         await session.commitTransaction();
         await session.endSession();
-        return tournamentDetails;
 
+        return tournamentDetails;
     } catch (error) {
         await session.abortTransaction();
         await session.endSession();
-        const { message, statusCode } = catchErrorMsgAndStatusCode(error);
-        console.log("Error in create knockout service : ", message);
+        const { statusCode, message } = catchErrorMsgAndStatusCode(error);
+        console.log("Error in Remove Double knockout tournament participant : ", statusCode, message);
         throw new AppError(statusCode, message);
     }
-};
+}
 
-
-export default tournamentDoubleKnockoutFormatCreation;
+export default removeDoubleKnockoutTournamentParticipant;

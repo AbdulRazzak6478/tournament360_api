@@ -4,6 +4,8 @@ import sportController from "../controllers/sport.controller.js";
 import createTournament from "../controllers/tournament/createTournament.controller.js";
 import getGameFixturesController from "../controllers/tournament/gameFixtures.controller.js";
 import updateMatchWinnerController from "../controllers/tournament/updateMatchWinner.controller.js";
+import addParticipantIntoTournament from "../controllers/tournament/AddParticipant.controller.js";
+import removeParticipantFromTournament from "../controllers/tournament/RemoveParticipant.controller.js";
 
 
 const router = Router();
@@ -54,6 +56,20 @@ router.post(
     // getUserRole,
     // verifyUserAccess("CREATE TOURNAMENT"),
     createTournament
+);
+router.post(
+    "/addParticipant/:tournamentID",
+    // auth,
+    // getUserRole,
+    // verifyUserAccess("CREATE TOURNAMENT"),
+    addParticipantIntoTournament
+);
+router.post(
+    "/removeParticipant/:tournamentID",
+    // auth,
+    // getUserRole,
+    // verifyUserAccess("CREATE TOURNAMENT"),
+    removeParticipantFromTournament
 );
 
 // Get tournament Game Fixtures

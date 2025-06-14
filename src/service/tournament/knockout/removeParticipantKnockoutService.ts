@@ -1,17 +1,17 @@
 import { ObjectId } from "mongoose";
-import statusCodes from "../../../constants/statusCodes";
-import matchModel, { IMatch } from "../../../models/match.model";
-import AppError from "../../../utils/appError";
-import catchErrorMsgAndStatusCode from "../../../utils/catchError";
+import statusCodes from "../../../constants/statusCodes.js";
+import matchModel, { IMatch } from "../../../models/match.model.js";
+import AppError from "../../../utils/appError.js";
+import catchErrorMsgAndStatusCode from "../../../utils/catchError.js";
 import mongoose from "mongoose";
-import roundModel from "../../../models/round.model";
+import roundModel from "../../../models/round.model.js";
 import { ClientSession } from "mongoose";
-import AppErrorCode from "../../../constants/appErrorCode";
+import AppErrorCode from "../../../constants/appErrorCode.js";
 import _ from "lodash";
-import TournamentModel from "../../../models/tournament.model";
-import KnockoutModel from "../../../models/knockoutFormat.model";
-import teamModel from "../../../models/team.model";
-import playerModel from "../../../models/player.model";
+import TournamentModel from "../../../models/tournament.model.js";
+import KnockoutModel from "../../../models/knockoutFormat.model.js";
+import teamModel from "../../../models/team.model.js";
+import playerModel from "../../../models/player.model.js";
 
 
 const getRoundNames = (participants: number, totalRounds: number) => {
@@ -219,7 +219,7 @@ const referencingMatchesToNextMatches = async (
             .find({
                 tournamentID: tournamentID,
                 formatTypeID: formatTypeID,
-                brackets: bracket,
+                bracket: bracket,
             })
             .populate<{ matches: IMatch[] }>("matches") // Ensures matches are populated with full objects
             .session(session);
@@ -494,8 +494,9 @@ const removeKnockoutTournamentParticipant = async (tournamentID: string, partici
             }
         }
         let index = 0;
+        const firstRoundMatches = allRoundsAndMatches[idx]?.matches ? allRoundsAndMatches[idx]?.matches : [];
         let bulkMatchUpdates = [];
-        for (let match of allRoundsAndMatches[idx].matches) {
+        for (let match of firstRoundMatches) {
             if (arrangedTeams && index < arrangedTeams.length) {
                 let setObj: { participantA: mongoose.Schema.Types.ObjectId, participantB?: mongoose.Schema.Types.ObjectId } = { participantA: arrangedTeams[index] }
                 match.participantA = arrangedTeams[index];

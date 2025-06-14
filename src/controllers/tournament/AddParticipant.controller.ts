@@ -8,6 +8,7 @@ import AppErrorCode from "../../constants/appErrorCode.js";
 import addParticipantInKnockoutFormatAndReArrangeTournament from "../../service/tournament/knockout/AddParticipantKnockoutService.js";
 import { failed_response, success_response } from "../../utils/response.js";
 import catchErrorMsgAndStatusCode from "../../utils/catchError.js";
+import addParticipantInDoubleKnockoutFormatAndReArrangeTournament from "../../service/tournament/doubleKnockout/addDoubleKnockoutParticipantService.js";
 
 const addParticipantIntoTournament = catchAsync(async (req, res) => {
     try {
@@ -29,10 +30,10 @@ const addParticipantIntoTournament = catchAsync(async (req, res) => {
 
         let responseData = {};
         if (tournamentDetails?.formatName?.toLowerCase() === "knockout") {
-            await addParticipantInKnockoutFormatAndReArrangeTournament(tournamentDetails?._id?.toString() as string, participantName);
+            responseData = await addParticipantInKnockoutFormatAndReArrangeTournament(tournamentDetails?._id?.toString() as string, participantName);
         }
         if (tournamentDetails?.formatName?.toLowerCase() === "double_elimination_bracket") {
-            // responseData = await addParticipantIntoDoubleKnockoutTournament(tournamentDetails, participantName);
+            responseData = await addParticipantInDoubleKnockoutFormatAndReArrangeTournament(tournamentDetails?._id?.toString() as string, participantName);
             // responseData = {
             //   message: "work in progress for double_elimination_bracket",
             // };

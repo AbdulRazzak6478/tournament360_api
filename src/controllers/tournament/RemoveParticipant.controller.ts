@@ -8,6 +8,7 @@ import TournamentModel from "../../models/tournament.model.js";
 import { failed_response, success_response } from "../../utils/response.js";
 import catchErrorMsgAndStatusCode from "../../utils/catchError.js";
 import removeKnockoutTournamentParticipant from "../../service/tournament/knockout/removeParticipantKnockoutService.js";
+import removeDoubleKnockoutTournamentParticipant from "../../service/tournament/doubleKnockout/removeParticipantDoubleKnockoutService.js";
 
 const removeParticipantFromTournament = catchAsync(async (req, res) => {
     try {
@@ -34,10 +35,10 @@ const removeParticipantFromTournament = catchAsync(async (req, res) => {
             // };
         }
         if (tournamentDetails?.formatName?.toLowerCase() === "double_elimination_bracket") {
-            // responseData = await removeParticipantFromDoubleKnockoutTournament(tournamentDetails, participantId)
-            responseData = {
-                message: "work in progress for double_elimination_bracket",
-            };
+            responseData = await removeDoubleKnockoutTournamentParticipant(tournamentDetails?._id?.toString() as string, participantID)
+            // responseData = {
+            //     message: "work in progress for double_elimination_bracket",
+            // };
         }
         if (tournamentDetails?.formatName?.toLowerCase() === "round_robbin") {
             // responseData = await removeParticipantFromRoundRobbinTournament(tournamentDetails, participantId);
