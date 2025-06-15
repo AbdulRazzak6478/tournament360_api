@@ -1,12 +1,12 @@
-import mongoose from "mongoose";
-import AppErrorCode from "../../../constants/appErrorCode.js";
-import statusCodes from "../../../constants/statusCodes.js";
-import matchModel, { IMatch } from "../../../models/match.model.js";
-import AppError from "../../../utils/appError.js";
+import mongoose, { ClientSession, ObjectId } from "mongoose";
 import catchErrorMsgAndStatusCode from "../../../utils/catchError.js";
-import _ from "lodash";
+import AppError from "../../../utils/appError.js";
+import statusCodes from "../../../constants/statusCodes.js";
+import AppErrorCode from "../../../constants/appErrorCode.js";
+import matchModel, { IMatch } from "../../../models/match.model.js";
 import roundModel from "../../../models/round.model.js";
 import TournamentModel from "../../../models/tournament.model.js";
+import _ from "lodash";
 type PartialMatchRef = Pick<IMatch, "_id" | "name">;
 
 type updateWinnerType = {
@@ -19,7 +19,78 @@ type updateWinnerType = {
 function isValidObjectId(id: string) {
     return mongoose.Types.ObjectId.isValid(id);
 }
-const updateWinnerInKnockoutTournament = async (data: updateWinnerType) => {
+
+const updatingLoserIntoLoserBracketRoundMatch = async (
+    roundNumber: number,
+    matchDetails: { _id: string; tournamentID: string; participantA: string; participantB: string; winner: string },
+    matchLoser: ObjectId,
+    session: ClientSession
+) => {
+    try {
+        let loserRound = await roundModel
+            .findOne({
+                tournamentID: matchDetails.tournamentID,
+                roundNumber: roundNumber,
+                bracket: "losers",
+            })
+            .select('participants matches')
+            .populate<{ matches: Pick<IMatch, "_id" | "participantA" | "participantB" | "matchA" | "matchB">[] | [] }>({ path: "matches", select: "participantA participantB matchA matchB" })
+            .session(session);
+            console.log("assigned loser : ",matchDetails.tournamentID,roundNumber,loserRound);
+        if (_.isEmpty(loserRound)) {
+            throw new Error(",not found loser round to update ");
+        }
+        let exist = loserRound.participants?.filter((participantId) => {
+            if (
+                participantId.toString() === matchDetails?.winner.toString() ||
+                participantId.toString() === matchDetails?.participantA?.toString() ||
+                participantId.toString() === matchDetails?.participantB?.toString()
+            ) {
+                return participantId.toString();
+            }
+        });
+        if (exist.length === 0) {
+            loserRound.participants.push(matchLoser);
+        } else {
+            loserRound.participants = loserRound.participants.filter(
+                (winnerId) => winnerId !== exist[0]
+            );
+            loserRound.participants.push(matchLoser);
+        }
+        loserRound = await loserRound.save({ session });
+        for (let match of loserRound.matches) {
+            if (
+                match?.matchA &&
+                match?.matchA?.toString() === matchDetails?._id?.toString()
+            ) {
+                match.participantA = matchLoser;
+
+                await matchModel.updateOne(
+                    { _id: match?._id },
+                    { $set: { participantA: matchLoser } }
+                );
+
+                // match = await match.save({ session });
+            }
+            if (
+                match?.matchB &&
+                match?.matchB?.toString() === matchDetails?._id?.toString()
+            ) {
+                match.participantB = matchLoser;
+                await matchModel.updateOne(
+                    { _id: match?._id },
+                    { $set: { participantA: matchLoser } }
+                );
+            }
+        }
+
+    } catch (error) {
+        const { statusCode, message } = catchErrorMsgAndStatusCode(error);
+        throw new AppError(statusCode, message);
+    }
+};
+
+const updateWinnerForDoubleKnockoutBrackets = async (data: updateWinnerType) => {
     const session = await mongoose.startSession();
     try {
 
@@ -40,7 +111,7 @@ const updateWinnerInKnockoutTournament = async (data: updateWinnerType) => {
         console.log(data)
         // 1.Fetch the Match with matchID
         const currentMatch = await matchModel.findById(data.matchID)
-            .select("roundID participantA participantB matchA matchB winner nextMatch status isCompleted")
+            .select("tournamentID roundID participantA participantB matchA matchB winner nextMatch status isCompleted")
             .populate<{ matchA: PartialMatchRef | null; matchB: PartialMatchRef | null }>([
                 { path: "matchA", select: "_id name" },
                 { path: "matchB", select: "_id name" },
@@ -84,7 +155,7 @@ const updateWinnerInKnockoutTournament = async (data: updateWinnerType) => {
         currentMatch.winner = data?.winnerID as unknown as mongoose.Schema.Types.ObjectId;
 
         const currentRound = await roundModel.findById(currentMatch?.roundID)
-            .select("roundName winners matches isCompleted")
+            .select("roundNumber roundName winners matches isCompleted bracket")
             .populate([
                 { path: "matches", select: "name" }
             ])
@@ -137,6 +208,26 @@ const updateWinnerInKnockoutTournament = async (data: updateWinnerType) => {
             console.log("next match : ", nextMatchDetails);
             await nextMatchDetails.save({ session });
         }
+
+        let matchLoser =
+            currentMatch?.winner?.toString() === currentMatch?.participantA?.toString()
+                ? currentMatch?.participantB
+                : currentMatch?.participantA;
+        if (matchLoser && currentRound?.bracket === "winners") {
+            const matchDetails = {
+                _id: currentMatch?._id?.toString(),
+                tournamentID: currentMatch?.tournamentID?.toString(),
+                participantA: currentMatch?.participantA?.toString(),
+                participantB: currentMatch?.participantB?.toString(),
+                winner: currentMatch?.winner?.toString()
+            }
+            await updatingLoserIntoLoserBracketRoundMatch(
+                currentRound?.roundNumber,
+                matchDetails,
+                matchLoser,
+                session
+            );
+        }
         // 6.check current round is complete or not
 
         if (currentRound.matches.length === currentRound?.winners.length) {
@@ -173,7 +264,7 @@ const updateWinnerInKnockoutTournament = async (data: updateWinnerType) => {
                 { runValidators: true, session: session }
             )
         }
-        if (currentRound?.roundName === "Final") {
+        if (currentRound?.bracket === "Final Bracket") {
             await TournamentModel.updateOne(
                 { _id: data?.tournamentId },
                 { $set: { status: "COMPLETED" } },
@@ -185,7 +276,6 @@ const updateWinnerInKnockoutTournament = async (data: updateWinnerType) => {
         await session.commitTransaction();
         await session.endSession();
         return { match: currentMatch };
-
     } catch (error) {
         await session.abortTransaction();
         await session.endSession();
@@ -194,4 +284,4 @@ const updateWinnerInKnockoutTournament = async (data: updateWinnerType) => {
     }
 }
 
-export default updateWinnerInKnockoutTournament;
+export default updateWinnerForDoubleKnockoutBrackets;

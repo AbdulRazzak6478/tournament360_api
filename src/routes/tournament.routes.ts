@@ -96,6 +96,6 @@ router.patch(
     // getUserRole,
     // verifyUserAccess("ANNOUNCE TOURNAMENT MATCH WINNER"),
     updateMatchWinnerController
-)
+);
 
 export default router;

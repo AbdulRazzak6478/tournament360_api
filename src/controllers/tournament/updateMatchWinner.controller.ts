@@ -8,6 +8,7 @@ import AppErrorCode from "../../constants/appErrorCode.js";
 import _ from "lodash";
 import TournamentModel from "../../models/tournament.model.js";
 import updateWinnerInKnockoutTournament from "../../service/tournament/knockout/updateKnockoutMatchWinnerService.js";
+import updateWinnerForDoubleKnockoutBrackets from "../../service/tournament/doubleKnockout/updateDoubleMatchWinnerService.js";
 
 
 
@@ -50,11 +51,18 @@ const updateMatchWinnerController = catchAsync(async (req, res) => {
             // };
         }
         if (tournament?.formatName === "double_elimination_bracket") {
-            responseData = {
-                message: "work in progress for double_elimination_bracket",
-            };
+            console.log("test winner:", tournament);
+            responseData = await updateWinnerForDoubleKnockoutBrackets({
+                tournamentId: tournament?._id as unknown as string,
+                status: tournament?.status,
+                matchID,
+                winnerID
+            });
+            // responseData = {
+            //     message: "work in progress for double_elimination_bracket",
+            // };
         }
-        if (tournament?.formatName === "double_elimination_bracket") {
+        if (tournament?.formatName === "round_robbin") {
             responseData = {
                 message: "work in progress for double_elimination_bracket",
             };
