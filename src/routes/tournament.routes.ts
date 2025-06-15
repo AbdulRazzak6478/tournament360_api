@@ -6,6 +6,7 @@ import getGameFixturesController from "../controllers/tournament/gameFixtures.co
 import updateMatchWinnerController from "../controllers/tournament/updateMatchWinner.controller.js";
 import addParticipantIntoTournament from "../controllers/tournament/AddParticipant.controller.js";
 import removeParticipantFromTournament from "../controllers/tournament/RemoveParticipant.controller.js";
+import editTournamentDetails from "../controllers/tournament/EditTournament.controller.js";
 
 
 const router = Router();
@@ -70,6 +71,13 @@ router.post(
     // getUserRole,
     // verifyUserAccess("CREATE TOURNAMENT"),
     removeParticipantFromTournament
+);
+router.post(
+    "/editTournament/:tournamentID",
+    // auth,
+    // getUserRole,
+    // verifyUserAccess("CREATE TOURNAMENT"),
+    editTournamentDetails
 );
 
 // Get tournament Game Fixtures

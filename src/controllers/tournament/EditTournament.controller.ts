@@ -10,6 +10,7 @@ import catchErrorMsgAndStatusCode from "../../utils/catchError.js";
 import { schemaValidation } from "../../utils/schemaValidate.js";
 import { editTournamentSchema } from "../../utils/tournamentValidation.js";
 import editKnockoutTournament from "../../service/tournament/knockout/editknockoutTournamentService.js";
+import editDoubleKnockoutTournament from "../../service/tournament/doubleKnockout/editDoubleKnockoutTournamentService.js";
 
 const editTournamentDetails = catchAsync(async (req, res) => {
     try {
@@ -103,10 +104,10 @@ const editTournamentDetails = catchAsync(async (req, res) => {
             // };
         }
         if (tournamentDetails?.formatName?.toLowerCase() === "double_elimination_bracket") {
-            // responseData = await removeParticipantFromDoubleKnockoutTournament(tournamentDetails, participantId)
-            responseData = {
-                message: "work in progress for double_elimination_bracket",
-            };
+            responseData = await editDoubleKnockoutTournament(data);
+            // responseData = {
+            //     message: "work in progress for double_elimination_bracket",
+            // };
         }
         if (tournamentDetails?.formatName?.toLowerCase() === "round_robbin") {
             // responseData = await removeParticipantFromRoundRobbinTournament(tournamentDetails, participantId);
