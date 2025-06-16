@@ -8,6 +8,7 @@ import AppError from "../../utils/appError.js";
 import AppErrorCode from "../../constants/appErrorCode.js";
 import tournamentKnockoutFormatCreation from "../../service/tournament/knockout/createKnockoutService.js";
 import tournamentDoubleKnockoutFormatCreation from "../../service/tournament/doubleKnockout/createDoubleKnockoutTournament.js";
+import createRoundRobbinTournament from "../../service/tournament/roundrobbin/createRRTournamentService.js";
 
 
 const createTournament = catchAsync(async (req, res) => {
@@ -45,7 +46,7 @@ const createTournament = catchAsync(async (req, res) => {
             fixingType,
         };
 
-        console.log("data : ",data);
+        console.log("data : ", data);
         // 3. call the formatType functions
         let responseData = {};
         if (data.formatType.toLowerCase() === "knockout") {
@@ -70,10 +71,10 @@ const createTournament = catchAsync(async (req, res) => {
             if (data.participants < round_robbin_format.min || data.participants > round_robbin_format.max) {
                 throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.participantsRange)
             }
-            // responseData = await createRoundRobbinTournament(data);
-            responseData = {
-                message: "work in progress for round_robbin",
-            };
+            responseData = await createRoundRobbinTournament(data);
+            // responseData = {
+            //     message: "work in progress for round_robbin",
+            // };
         }
         return res.status(statusCodes.CREATED)
             .json(

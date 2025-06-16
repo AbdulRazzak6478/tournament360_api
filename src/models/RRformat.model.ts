@@ -2,6 +2,7 @@ import mongoose, { Document } from "mongoose";
 
 
 interface IRoundRobbinFormat extends Document {
+    _id: mongoose.Schema.Types.ObjectId;
     tournamentID: mongoose.Schema.Types.ObjectId;
     formatName: string;
     fixingType: string;
