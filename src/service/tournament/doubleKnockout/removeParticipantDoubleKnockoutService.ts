@@ -613,7 +613,7 @@ const removeDoubleKnockoutTournamentParticipant = async (tournamentID: string, p
         if (_.isEmpty(doubleKnockoutFormat)) {
             throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotExist("Double Knockout Format"))
         }
-        console.log("ids : ",doubleKnockoutFormat?.participants);
+        console.log("ids : ", doubleKnockoutFormat?.participants);
         // 2. validate participant exist or not
         if (tournamentDetails?.gameType === "team") {
             if (
@@ -845,6 +845,7 @@ const removeDoubleKnockoutTournamentParticipant = async (tournamentID: string, p
         doubleKnockoutFormat.finalRoundName = finalBracketRound?.roundName;
         doubleKnockoutFormat.finalRoundId = [finalBracketRound?._id];
 
+        tournamentDetails.totalParticipants = participantsIds.length;
         tournamentDetails.formatID = doubleKnockoutFormat?._id;
         doubleKnockoutFormat = await doubleKnockoutFormat.save({ session })
         tournamentDetails = await tournamentDetails.save({ session })

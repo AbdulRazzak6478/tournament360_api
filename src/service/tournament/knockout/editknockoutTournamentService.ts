@@ -523,9 +523,7 @@ const editKnockoutTournament = async (data: dataType) => {
                     .session(session);
             }
         }
-        // if (data.gameType !== tournamentDetails?.gameType?.toString()) {
-        //     throw new Error(", tournament gameType cannot change");
-        // }
+
         // 3. Save Tournament Details
         if (tournamentDetails.tournamentName !== Name) {
             tournamentDetails.tournamentName = Name;

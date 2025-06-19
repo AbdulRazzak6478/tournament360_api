@@ -8,7 +8,7 @@ import AppError from "../../utils/appError.js";
 import AppErrorCode from "../../constants/appErrorCode.js";
 import tournamentKnockoutFormatCreation from "../../service/tournament/knockout/createKnockoutService.js";
 import tournamentDoubleKnockoutFormatCreation from "../../service/tournament/doubleKnockout/createDoubleKnockoutTournament.js";
-import createRoundRobbinTournament from "../../service/tournament/roundrobbin/createRRTournamentService.js";
+import createRoundRobbinTournament from "../../service/tournament/roundrobbin/createRRTournament.service.js";
 
 
 const createTournament = catchAsync(async (req, res) => {

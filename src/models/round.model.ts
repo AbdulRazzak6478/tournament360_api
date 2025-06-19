@@ -36,7 +36,7 @@ const roundSchema: Schema<IRound> = new Schema<IRound>({
     },
     formatRef: {
         type: String,
-        enum: ['knockout', 'doubleKnockout'],
+        enum: ['knockout', 'doubleKnockout','RoundRobbin'],
         required: true
     },
     formatName: {

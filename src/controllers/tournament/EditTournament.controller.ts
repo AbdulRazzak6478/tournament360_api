@@ -11,6 +11,7 @@ import { schemaValidation } from "../../utils/schemaValidate.js";
 import { editTournamentSchema } from "../../utils/tournamentValidation.js";
 import editKnockoutTournament from "../../service/tournament/knockout/editknockoutTournamentService.js";
 import editDoubleKnockoutTournament from "../../service/tournament/doubleKnockout/editDoubleKnockoutTournamentService.js";
+import editRoundRobbinFormatTournament from "../../service/tournament/roundrobbin/editRRTournament.service.js";
 
 const editTournamentDetails = catchAsync(async (req, res) => {
     try {
@@ -110,10 +111,10 @@ const editTournamentDetails = catchAsync(async (req, res) => {
             // };
         }
         if (tournamentDetails?.formatName?.toLowerCase() === "round_robbin") {
-            // responseData = await removeParticipantFromRoundRobbinTournament(tournamentDetails, participantId);
-            responseData = {
-                message: "work in progress for round_robbin",
-            };
+            responseData = await editRoundRobbinFormatTournament(data);
+            // responseData = {
+            //     message: "work in progress for round_robbin",
+            // };
         }
         return res
             .status(statusCodes.CREATED)

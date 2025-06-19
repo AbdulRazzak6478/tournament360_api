@@ -974,6 +974,7 @@ const editDoubleKnockoutTournament = async (data: dataType) => {
             doubleKnockoutFormatDetails.finalRoundId = [finalBracketRound?._id];
 
             tournamentDetails.formatID = doubleKnockoutFormatDetails?._id;
+            tournamentDetails.totalParticipants = participantsIds.length;
         } else if (data?.fixingType !== tournamentDetails?.fixingType) {
             await roundModel
                 .updateMany(

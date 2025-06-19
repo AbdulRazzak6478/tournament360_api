@@ -9,6 +9,7 @@ import addParticipantInKnockoutFormatAndReArrangeTournament from "../../service/
 import { failed_response, success_response } from "../../utils/response.js";
 import catchErrorMsgAndStatusCode from "../../utils/catchError.js";
 import addParticipantInDoubleKnockoutFormatAndReArrangeTournament from "../../service/tournament/doubleKnockout/addDoubleKnockoutParticipantService.js";
+import addParticipantInRRTournament from "../../service/tournament/roundrobbin/AddParticipantRR.service.js";
 
 const addParticipantIntoTournament = catchAsync(async (req, res) => {
     try {
@@ -39,7 +40,7 @@ const addParticipantIntoTournament = catchAsync(async (req, res) => {
             // };
         }
         if (tournamentDetails?.formatName?.toLowerCase() === "round_robbin") {
-            // responseData = await addParticipantIntoRoundRobbinFormat(tournamentDetails, participantName);
+            responseData = await addParticipantInRRTournament(tournamentDetails?._id?.toString() as string, participantName);
             // responseData = {
             //   message: "work in progress for round_robbin",
             // };

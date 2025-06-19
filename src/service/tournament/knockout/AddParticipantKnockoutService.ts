@@ -439,6 +439,7 @@ const addParticipantInKnockoutFormatAndReArrangeTournament = async (tournamentID
             }
             const teams = await teamModel
                 .find({ tournamentID: tournamentId })
+                .select('name')
                 .session(session).lean();
             if (_.isEmpty(teams)) {
                 throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotFound("Teams"));
@@ -456,6 +457,7 @@ const addParticipantInKnockoutFormatAndReArrangeTournament = async (tournamentID
             }
             const players = await playerModel
                 .find({ tournamentID: tournamentId })
+                .select('name')
                 .session(session).lean();
             if (_.isEmpty(players)) {
                 throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotFound("Players"));

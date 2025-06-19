@@ -49,9 +49,13 @@ const getGameFixturesController = catchAsync(async (req, res) => {
             // }
         }
         if (tournamentDetails?.formatName === "round_robbin") {
-            responseData = {
-                message: "work in progress for round_robbin",
-            };
+            responseData = await getKnockoutFixturesService({
+                tournamentId: tournamentDetails?._id as unknown as string,
+                bracket
+            });
+            // responseData = {
+            //     message: "work in progress for round_robbin",
+            // };
         }
         // 4.return the fixtures in the response
         return res.status(statusCodes.OK).json(

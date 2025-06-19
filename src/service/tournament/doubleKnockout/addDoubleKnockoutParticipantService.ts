@@ -859,6 +859,7 @@ const addParticipantInDoubleKnockoutFormatAndReArrangeTournament = async (tourna
         doubleKnockoutFormat.finalRoundName = finalBracketRound?.roundName;
         doubleKnockoutFormat.finalRoundId = [finalBracketRound?._id];
 
+        tournamentDetails.totalParticipants = participantsIds.length;
         tournamentDetails.formatID = doubleKnockoutFormat?._id;
         doubleKnockoutFormat = await doubleKnockoutFormat.save({ session })
         tournamentDetails = await tournamentDetails.save({ session })
