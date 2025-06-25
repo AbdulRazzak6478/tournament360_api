@@ -1,4 +1,5 @@
 import mongoose, { Document } from "mongoose";
+import { gameTypeRefs, participantRefs } from "../constants/modelRefs.js";
 
 
 export interface IRoundRobbinFormat extends Document {
@@ -36,7 +37,7 @@ const RRFormatSchema = new mongoose.Schema<IRoundRobbinFormat>(
         },
         gameType: {
             type: String,
-            enum: ["team", "individual"],
+            enum: gameTypeRefs,
             required: true,
         },
         totalRounds: {
@@ -75,7 +76,7 @@ const RRFormatSchema = new mongoose.Schema<IRoundRobbinFormat>(
         ],
         participantsRef: {
             type: String,
-            default: "",
+            enum: participantRefs
         }
     },
     { timestamps: true }

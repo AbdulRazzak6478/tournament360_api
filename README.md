@@ -10,7 +10,7 @@
 - Chat System Into Tournament Feed.
 - Socket System in Score System to update score realTime.
 - Unlimited Reward declared. with based on different winner status
-- Notifications To User through wen application section or email.
+- Notifications To User through web application section or email.
 - Update Organizer status from admin to onboard User
 - socket update when new user onboard.
 - Tournament Cost for participant to enroll.

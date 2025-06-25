@@ -9,8 +9,8 @@ import { failed_response, success_response } from "../../utils/response.js";
 import catchErrorMsgAndStatusCode from "../../utils/catchError.js";
 import { schemaValidation } from "../../utils/schemaValidate.js";
 import { editTournamentSchema } from "../../utils/tournamentValidation.js";
-import editKnockoutTournament from "../../service/tournament/knockout/editknockoutTournamentService.js";
-import editDoubleKnockoutTournament from "../../service/tournament/doubleKnockout/editDoubleKnockoutTournamentService.js";
+import editKnockoutTournament from "../../service/tournament/knockout/editknockoutTournament.service.js";
+import editDoubleKnockoutTournament from "../../service/tournament/doubleKnockout/editDoubleKnockoutTournament.service.js";
 import editRoundRobbinFormatTournament from "../../service/tournament/roundrobbin/editRRTournament.service.js";
 
 const editTournamentDetails = catchAsync(async (req, res) => {

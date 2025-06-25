@@ -1,16 +1,12 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
-
-export const formatNameEnums = ['knockout', 'double_elimination_bracket', 'round_robbin'];
-
-export const fixingTypeEnums = ['sequential', 'random', 'manual', 'top_vs_bottom'];
-
-export const scoreTypeEnums = ['Top Score', 'Best Of', 'Race To', 'Cricket', 'Football'];
-
+import { fixingTypeEnums, formatNames, gameTypeRefs, scoreTypeEnums } from '../constants/modelRefs.js';
 export interface ITournament extends Document {
     tournamentID: string;
     formatID: mongoose.Schema.Types.ObjectId;
     sportID: mongoose.Schema.Types.ObjectId;
-    totalParticipants:number;
+    createdBy: mongoose.Schema.Types.ObjectId;
+    createdByRef: string;
+    totalParticipants: number;
     sportName: string;
     formatName: string;
     formatRef: string;
@@ -40,13 +36,23 @@ const TournamentSchema = new Schema<ITournament>({
     },
     tournamentName: {
         type: String,
-        default:""
+        default: ""
     },
     formatID: {
         type: mongoose.Schema.Types.ObjectId,
         refPath: "formatRef",
-        default:null,
+        default: null,
         index: true
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        refPath: "createdByRef",
+        default: null,
+        index: true
+    },
+    createdByRef: {
+        type: String,
+        default: '',
     },
     sportID: {
         type: mongoose.Schema.Types.ObjectId,
@@ -65,17 +71,17 @@ const TournamentSchema = new Schema<ITournament>({
     formatName: {
         type: String,
         required: true,
-        enum: formatNameEnums,
+        enum: formatNames,
     },
     fixingType: {
         type: String,
         enum: fixingTypeEnums,
-        required:true,
+        required: true,
         // default: "sequential"
     },
     gameType: {
         type: String,
-        enum: ['team', 'individual'],
+        enum: gameTypeRefs,
         required: true
     },
     description: {

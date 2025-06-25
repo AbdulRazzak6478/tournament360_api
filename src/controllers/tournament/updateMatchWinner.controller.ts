@@ -7,8 +7,9 @@ import statusCodes from "../../constants/statusCodes.js";
 import AppErrorCode from "../../constants/appErrorCode.js";
 import _ from "lodash";
 import TournamentModel from "../../models/tournament.model.js";
-import updateWinnerInKnockoutTournament from "../../service/tournament/knockout/updateKnockoutMatchWinnerService.js";
-import updateWinnerForDoubleKnockoutBrackets from "../../service/tournament/doubleKnockout/updateDoubleMatchWinnerService.js";
+import updateWinnerInKnockoutTournament from "../../service/tournament/knockout/updateKnockoutMatchWinner.service.js";
+import updateWinnerForDoubleKnockoutBrackets from "../../service/tournament/doubleKnockout/updateDoubleMatchWinner.service.js";
+import AnnounceRoundRobbinMatchWinner from "../../service/tournament/roundrobbin/updateRRMatchWinner.service.js";
 
 
 
@@ -63,9 +64,16 @@ const updateMatchWinnerController = catchAsync(async (req, res) => {
             // };
         }
         if (tournament?.formatName === "round_robbin") {
-            responseData = {
-                message: "work in progress for double_elimination_bracket",
-            };
+
+            responseData = await AnnounceRoundRobbinMatchWinner({
+                tournamentId: tournament?._id as unknown as string,
+                status: tournament?.status,
+                matchID,
+                winnerID
+            });
+            // responseData = {
+            //     message: "work in progress for double_elimination_bracket",
+            // };
         }
 
         return res

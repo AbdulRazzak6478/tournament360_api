@@ -1,8 +1,10 @@
 import mongoose, { Model, Schema } from "mongoose";
 import { Document } from "mongoose";
+import { userRefs } from "../constants/modelRefs.js";
 
 export interface userRoleDocument extends Document {
     userMongoId: mongoose.Schema.Types.ObjectId;
+    userRef: string;
     role: {
         admin: boolean;
         user: boolean;
@@ -11,7 +13,10 @@ export interface userRoleDocument extends Document {
             type: boolean;
             permissions: [string];
         };
-        subordinate: boolean;
+        staff: {
+            type: boolean;
+            permissions: [string];
+        };
     };
     createdAt: Date;
     updatedAt: Date;
@@ -20,8 +25,13 @@ export interface userRoleDocument extends Document {
 const userRolesSchema = new Schema<userRoleDocument>({
     userMongoId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Organizer",
+        refPath: "userRef",
         required: true
+    },
+    userRef: {
+        type: String,
+        enum:userRefs,
+        required: true,
     },
     role: {
         admin: { type: Boolean, default: false },
@@ -31,8 +41,9 @@ const userRolesSchema = new Schema<userRoleDocument>({
             type: { type: Boolean, default: false },
             permissions: [String]
         },
-        subordinate : {
-            type : Boolean, default : false
+        staff: {
+            type: { type: Boolean, default: false },
+            permissions: [String],
         }
     }
 }, { timestamps: true });

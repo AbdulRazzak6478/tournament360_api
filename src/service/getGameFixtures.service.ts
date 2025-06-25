@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
-import AppErrorCode from "../../../constants/appErrorCode.js";
-import statusCodes from "../../../constants/statusCodes.js";
-import AppError from "../../../utils/appError.js";
-import catchErrorMsgAndStatusCode from "../../../utils/catchError.js";
+import AppErrorCode from "../constants/appErrorCode.js";
+import statusCodes from "../constants/statusCodes.js";
+import AppError from "../utils/appError.js";
+import catchErrorMsgAndStatusCode from "../utils/catchError.js";
 import _ from "lodash";
-import roundModel from "../../../models/round.model.js";
+import roundModel from "../models/round.model.js";
 type dataType = {
     tournamentId: string,
     bracket: string
@@ -66,7 +66,7 @@ const getKnockoutFixturesService = async (data: dataType) => {
         if (_.isEmpty(roundsData)) {
             throw new AppError(statusCodes.BAD_REQUEST, AppErrorCode.fieldNotFound("rounds"));
         }
-        console.log("roundsData : ", roundsData?.[0]?.matches?.[0],roundsData?.[0]);
+        console.log("roundsData : ", roundsData?.[0]?.matches?.[0], roundsData?.[0]);
         let payload = roundsData.map((round) => {
             const matches = round.matches.map((match) => {
                 let participantA = match?.participantA ? match.participantA?.name : match?.matchA?.name ? "Winner From " + match?.matchA?.name : null;

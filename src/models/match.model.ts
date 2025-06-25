@@ -1,5 +1,5 @@
-import { scoreTypeEnums } from './tournament.model.js';
 import mongoose, { model, Schema } from "mongoose";
+import { scoreTypeEnums } from "../constants/modelRefs.js";
 
 
 export interface IMatch extends Document {

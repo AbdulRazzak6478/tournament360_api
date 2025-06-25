@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import mongoose, { Document, Model } from 'mongoose';
 
 
-export interface SubOrdinateDocument extends Document {
+export interface IStaff extends Document {
     organizerId: mongoose.Schema.Types.ObjectId;
     name: string;
     password: string;
@@ -16,11 +16,11 @@ export interface SubOrdinateDocument extends Document {
     totalNoOfPasswordReset: number;
     passwordReset: boolean;
     comparePassword(val: string): Promise<boolean>;
-    omitPassword(): Omit<SubOrdinateDocument, "password">;
+    omitPassword(): Omit<IStaff, "password">;
     createdAt: Date;
     updated: Date;
 }
-const SubOrdinateSchema = new mongoose.Schema<SubOrdinateDocument>({
+const StaffSchema = new mongoose.Schema<IStaff>({
     organizerId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Organizer', index: true },
     name: { type: String, required: true, index: true },
     password: { type: String, required: true },
@@ -35,14 +35,14 @@ const SubOrdinateSchema = new mongoose.Schema<SubOrdinateDocument>({
     passwordReset: { type: Boolean, default: false },
 }, { timestamps: true });
 
-SubOrdinateSchema.index({ email: 1 });
-SubOrdinateSchema.index({ name: 1 });
-SubOrdinateSchema.index({ status: 1 });
-SubOrdinateSchema.index({ mobileNumber: 1 });
-SubOrdinateSchema.index({ userRole: 1 });
-SubOrdinateSchema.index({ organizer: 1 });
+StaffSchema.index({ email: 1 });
+StaffSchema.index({ name: 1 });
+StaffSchema.index({ status: 1 });
+StaffSchema.index({ mobileNumber: 1 });
+StaffSchema.index({ userRole: 1 });
+StaffSchema.index({ organizer: 1 });
 
-SubOrdinateSchema.pre<SubOrdinateDocument>("save", async function (next) {
+StaffSchema.pre<IStaff>("save", async function (next) {
     console.log("user modified check : ", this.isModified("password"));
 
     // No need to assign 'this' to a local variable
@@ -64,18 +64,18 @@ SubOrdinateSchema.pre<SubOrdinateDocument>("save", async function (next) {
 
 
 // Method to compare password for login purposes
-SubOrdinateSchema.methods.comparePassword = async function (
+StaffSchema.methods.comparePassword = async function (
     password: string
 ): Promise<boolean> {
     return await bcrypt.compare(password, this.password);
 };
 
-SubOrdinateSchema.methods.omitPassword = function () {
+StaffSchema.methods.omitPassword = function () {
     const user = this.toObject();
     delete user.password;
     return user;
 }
 
-const subordinateModel: Model<SubOrdinateDocument> = mongoose.model<SubOrdinateDocument>('SubOrdinate', SubOrdinateSchema);
+const staffModel: Model<IStaff> = mongoose.model<IStaff>('staff', StaffSchema);
 
-export default subordinateModel;
+export default staffModel;

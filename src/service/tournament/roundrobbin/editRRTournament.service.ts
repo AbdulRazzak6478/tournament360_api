@@ -406,6 +406,7 @@ const editRoundRobbinFormatTournament = async (data: dataType) => {
 
             // Update tournament format
             RoundRobbinFormat.participants = participantsIds as unknown as mongoose.Schema.Types.ObjectId[];
+            RoundRobbinFormat.totalParticipants = participantsIds.length;
             RoundRobbinFormat.pointTable = pointTableIds;
             RoundRobbinFormat.rounds = roundIds;
             RoundRobbinFormat.totalRounds = roundIds.length;

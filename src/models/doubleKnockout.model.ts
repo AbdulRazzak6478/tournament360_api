@@ -1,4 +1,5 @@
 import mongoose, { Document } from "mongoose";
+import { gameTypeRefs, participantRefs } from "../constants/modelRefs.js";
 
 interface IDoubleKnockout extends Document {
 
@@ -41,7 +42,7 @@ const doubleKnockoutSchema = new mongoose.Schema(
         },
         gameType: {
             type: String,
-            enum: ["team", "individual"],
+            enum: gameTypeRefs,
             required: true,
         },
         totalWinnersRounds: {
@@ -104,7 +105,7 @@ const doubleKnockoutSchema = new mongoose.Schema(
         ],
         participantsRef: {
             type: String,
-            default: "",
+            enum: participantRefs,
         }
     },
     { timestamps: true }

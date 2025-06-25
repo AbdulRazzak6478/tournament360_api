@@ -2,13 +2,13 @@ import bcrypt from 'bcryptjs';
 import mongoose, { Schema, Document, model } from 'mongoose';
 
 // Define the Admin interface
-export interface AdminDocument extends Document {
+export interface IAdmin extends Document {
     name: string;
     password: string;
     email: string;
     role: mongoose.Schema.Types.ObjectId;
     comparePassword(val: string): Promise<boolean>;
-    omitPassword(): Omit<AdminDocument, "password">;
+    omitPassword(): Omit<IAdmin, "password">;
     totalNoOfPasswordReset: number;
     passwordReset: boolean;
     createdAt: Date;
@@ -16,7 +16,7 @@ export interface AdminDocument extends Document {
 }
 
 // Define the Admin schema
-const AdminSchema: Schema = new Schema<AdminDocument>({
+const AdminSchema: Schema = new Schema<IAdmin>({
     name: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -27,7 +27,7 @@ const AdminSchema: Schema = new Schema<AdminDocument>({
 
 AdminSchema.index({ email: 1 });
 
-AdminSchema.pre<AdminDocument>("save", async function (next) {
+AdminSchema.pre<IAdmin>("save", async function (next) {
     console.log("user modified check : ", this.isModified("password"));
 
     // No need to assign 'this' to a local variable
@@ -62,5 +62,5 @@ AdminSchema.methods.omitPassword = function () {
 }
 
 // Create and export the Admin model
-const AdminModel = model<AdminDocument>('Admin', AdminSchema);
+const AdminModel = model<IAdmin>('Admin', AdminSchema);
 export default AdminModel;

@@ -2,7 +2,7 @@ import { refreshTokenOptions, signToken, verifyToken } from './../utils/jwt.js';
 import mongoose from "mongoose";
 import statusCodes from "../constants/statusCodes.js";
 import verificationCodeType from "../constants/verificationCode.js";
-import organizerModel, { locationDocument, OrganizerDocument } from "../models/Organizer.model.js";
+import organizerModel, { locationDocument, IOrganizer } from "../models/Organizer.model.js";
 import OtpModel from "../models/otp-model.js";
 import userRoleModel from "../models/userRole.model.js";
 import appErrorAssert from "../utils/appAssert.js";
@@ -14,9 +14,9 @@ import { generateCustomID, generateOTP, generateUniqueReferenceID } from "../uti
 import sessionModel from "../models/session.model.js";
 import GlobalUserModel from '../models/globalUsers.model.js';
 import { comparePassword } from '../utils/helpers.js';
-import { SubOrdinateDocument } from '../models/subordinate.model.js';
-import { SubAdminDocument } from '../models/subadmin.model.js';
-import { AdminDocument } from '../models/admin.model.js';
+import { IStaff } from '../models/staff.model.js';
+import { ISubAdmin } from '../models/subadmin.model.js';
+import { IAdmin } from '../models/admin.model.js';
 
 const sentOtpToEmail = async (email: string) => {
     try {
@@ -331,7 +331,7 @@ const loginService = async (email: string, password: string) => {
         appErrorAssert(user?.userMongoId, statusCodes.NOT_FOUND, 'user not found.');
 
         // 2.compare passwords
-        const platformUser = (user?.userMongoId as unknown) as OrganizerDocument | SubOrdinateDocument | SubAdminDocument | AdminDocument;
+        const platformUser = (user?.userMongoId as unknown) as IOrganizer | IStaff | ISubAdmin | IAdmin;
         appErrorAssert(await comparePassword(password, platformUser.password), statusCodes.BAD_REQUEST, "Password is incorrect. Please try again.");
 
         // 3.generate OTP and referenceID
@@ -388,7 +388,7 @@ const loginOtpVerifyService = async (otp: number, referenceID: string, userAgent
         appErrorAssert(user?.userMongoId, statusCodes.UNAUTHORIZED, "User not exist.");
         appErrorAssert(user?.isSignedUp, statusCodes.UNAUTHORIZED, "Completed Your sign up first.");
 
-        const platformUser = (user?.userMongoId as unknown) as OrganizerDocument | SubOrdinateDocument | SubAdminDocument | AdminDocument;
+        const platformUser = (user?.userMongoId as unknown) as IOrganizer | IStaff | ISubAdmin | IAdmin;
 
         // 3.remove user all sessions and create a new session
         await sessionModel.deleteMany({ userMongoId: platformUser?._id });
@@ -541,7 +541,7 @@ const resetPasswordService = async (password: string, referenceID: string) => {
         // 3.update password in the user details
         let user = await GlobalUserModel.findOne({ email: otpReference?.email }).populate('userMongoId');
         appErrorAssert(user, statusCodes.NOT_FOUND, 'User not found.');
-        let platformUser = (user.userMongoId as unknown) as OrganizerDocument | SubOrdinateDocument | SubAdminDocument | AdminDocument;
+        let platformUser = (user.userMongoId as unknown) as IOrganizer | IStaff | ISubAdmin | IAdmin;
         platformUser.password = password;
         platformUser.passwordReset = true;
         platformUser.totalNoOfPasswordReset = platformUser.totalNoOfPasswordReset + 1;

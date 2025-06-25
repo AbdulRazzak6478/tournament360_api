@@ -4,12 +4,12 @@ import catchErrorMsgAndStatusCode from "../utils/catchError.js";
 import { failed_response, success_response } from "../utils/response.js";
 import statusCodes from "../constants/statusCodes.js";
 import { createSubordinateSchema } from "../utils/yupValidations.js";
-import subordinateService from "../service/subordinate-service.js";
 import mongoose from "mongoose";
+import staffService from "../service/staff.service.js";
 
 
 
-const createSubordinate = catchAsync(async (req, res) => {
+const createStaff = catchAsync(async (req, res) => {
     const { organizerId } = req.params;
     if (!mongoose.Types.ObjectId.isValid(organizerId)) {
         return res
@@ -61,12 +61,12 @@ const createSubordinate = catchAsync(async (req, res) => {
             mobileNumber
         }
         // 3. call the create subordinate service
-        const response = await subordinateService.createSubordinateService(organizerId, payload);
+        const response = await staffService.createStaffService(organizerId, payload);
         // 4. return the created subordinate payload
         return res.status(statusCodes.CREATED).json(
             success_response(
                 statusCodes.CREATED,
-                "subordinate is created successfully.",
+                "Staff Created Successfully.",
                 response,
                 true
             )
@@ -76,7 +76,7 @@ const createSubordinate = catchAsync(async (req, res) => {
         return res.status(statusCode).json(
             failed_response(
                 statusCode,
-                "failed to create subordinate",
+                "failed to create Staff",
                 { message },
                 false
             )
@@ -84,8 +84,8 @@ const createSubordinate = catchAsync(async (req, res) => {
     }
 });
 
-const subOrdinateController = {
-    createSubordinate
+const staffController = {
+    createStaff
 }
 
-export default subOrdinateController;
+export default staffController;

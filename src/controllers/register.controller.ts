@@ -12,7 +12,7 @@ import {
     loginSchema,
     resetPasswordSchema,
 } from "../utils/yupValidations.js";
-import registerService from "../service/register-service.js";
+import registerService from "../service/register.service.js";
 import catchErrorMsgAndStatusCode from "../utils/catchError.js";
 import { clearAuthCookies, setAuthCookies } from "../utils/cookies.js";
 import sessionModel from "../models/session.model.js";

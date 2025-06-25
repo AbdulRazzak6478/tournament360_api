@@ -1,5 +1,5 @@
 import mongoose from "mongoose"
-import { SessionDocument } from "../models/session.model.js"
+import { ISession } from "../models/session.model.js"
 import env from "../constants/env.js"
 import jwt, { SignOptions, VerifyOptions } from 'jsonwebtoken';
 import catchErrorMsgAndStatusCode from "./catchError.js";
@@ -8,11 +8,11 @@ import AppError from "./appError.js";
 
 
 export type refreshTokenPayload = {
-    sessionId: SessionDocument['_id'],
+    sessionId: ISession['_id'],
 }
 
 export type accessTokenPayload = {
-    sessionId: SessionDocument['_id'],
+    sessionId: ISession['_id'],
     userId: mongoose.Schema.Types.ObjectId,
 }
 

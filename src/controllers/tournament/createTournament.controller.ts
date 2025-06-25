@@ -6,8 +6,8 @@ import { schemaValidation } from "../../utils/schemaValidate.js";
 import { createTournamentSchema } from "../../utils/tournamentValidation.js";
 import AppError from "../../utils/appError.js";
 import AppErrorCode from "../../constants/appErrorCode.js";
-import tournamentKnockoutFormatCreation from "../../service/tournament/knockout/createKnockoutService.js";
-import tournamentDoubleKnockoutFormatCreation from "../../service/tournament/doubleKnockout/createDoubleKnockoutTournament.js";
+import tournamentKnockoutFormatCreation from "../../service/tournament/knockout/createKnockout.service.js";
+import tournamentDoubleKnockoutFormatCreation from "../../service/tournament/doubleKnockout/createDoubleKnockoutTournament.service.js";
 import createRoundRobbinTournament from "../../service/tournament/roundrobbin/createRRTournament.service.js";
 
 
@@ -15,7 +15,7 @@ const createTournament = catchAsync(async (req, res) => {
     try {
 
         // validate subordinate
-        if (req.subordinateID) {
+        if (req.staffID) {
             throw new AppError(statusCodes.UNAUTHORIZED, "You Are Not Authorized!.");
         }
         // 1. validate data payload

@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { failed_response, success_response } from '../utils/response.js';
+import { failed_response } from '../utils/response.js';
 import _ from "lodash";
 import AppError from '../utils/appError.js';
 import statusCodes from '../constants/statusCodes.js';
@@ -86,6 +86,9 @@ const getUserRole = async (req: Request, res: Response, next: NextFunction): Pro
         }
         // 2. Add User Role in Request
         req.userRole = userRole;
+        if (req.userRole?.role?.staff.type) {
+            req.staffId = req.userRole?.userMongoId;
+        }
         console.log("role : ", req.userRole);
         next();
     } catch (error) {
@@ -138,8 +141,6 @@ const verifyAdmin = async (req: Request, res: Response, next: NextFunction): Pro
     })
 }
 
-
-
 const verifySubAdmin = (...permissions: string[]) => (async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     auth(req, res, async () => {
         getUserRole(req, res, async () => {
@@ -158,6 +159,8 @@ const verifySubAdmin = (...permissions: string[]) => (async (req: Request, res: 
                         )
                     ) {
                         return next();
+                    } else {
+                        throw new AppError(statusCodes.UNAUTHORIZED, AppErrorCode?.YouAreNotAuthorized);
                     }
                 } else {
                     // for user and others
@@ -200,8 +203,8 @@ const verifyUserAccess = (permission: string) => (async (req: Request, res: Resp
                     }
                 } else if (req?.userRole?.role?.organizer) {
                     next();
-                } else if (req?.userRole?.role?.subordinate) {
-                    req.subordinateID = req?.userRole?.userMongoId;
+                } else if (req?.userRole?.role?.staff?.type) {
+                    req.staffID = req?.userRole?.userMongoId;
                     next();
                 } else {
                     // for user
@@ -225,10 +228,90 @@ const verifyUserAccess = (permission: string) => (async (req: Request, res: Resp
 });
 
 
+const verifyAuthorizeUser = (...permissions: string[]) => (async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    auth(req, res, async () => {
+        getUserRole(req, res, async () => {
+
+            try {
+                console.log("in verify request : ", permissions, req.currentUser, req.userRole);
+                req.authId = req?.userRole?.userMongoId;
+                if (req?.userRole?.role?.admin) {
+                    next();
+                } else if (req?.userRole?.role?.subAdmin?.type) {
+                    // SUBS HAVE ACCESS TO CERTAIN PATHS
+                    if (
+                        !permissions.some((permission) =>
+                            req?.userRole?.role?.subAdmin?.permissions.includes(permission)
+                        )
+                    ) {
+                        throw new AppError(statusCodes.UNAUTHORIZED, "You Are not authorized For This resource.");
+                    }
+                    return next();
+                } else if (req?.userRole?.role?.organizer) {
+                    next();
+                } else if (req?.userRole?.role?.staff?.type) {
+                    req.staffID = req?.userRole?.userMongoId;
+                    // SUBS HAVE ACCESS TO CERTAIN PATHS
+                    if (
+                        !permissions.some((permission) =>
+                            req?.userRole?.role?.staff?.permissions.includes(permission)
+                        )
+                    ) {
+                        throw new AppError(statusCodes.UNAUTHORIZED, "You Are Not Authorized For This Resource.");
+                    }
+                    return next();
+                } else if (req?.userRole?.role?.user) {
+                    return next();
+                } else {
+                    throw new AppError(statusCodes.UNAUTHORIZED, "You Are Not Authorized For This Resource.");
+                }
+            } catch (error) {
+                const { statusCode, message } = catchErrorMsgAndStatusCode(error);
+                res.status(statusCode).json(
+                    failed_response(
+                        statusCode,
+                        "Failed to Verify User Access",
+                        {
+                            message
+                        },
+                        false
+                    )
+                );
+            }
+
+        });
+    });
+});
+
+const restrictPlatformUserAccess = (req: Request, res: Response, next: NextFunction) => {
+    try {
+
+        if (req?.userRole?.role?.user) {
+            throw new AppError(statusCodes.UNAUTHORIZED, "You Are Not Authorized For This Resource.");
+        }
+        next();
+    } catch (error) {
+        const { statusCode, message } = catchErrorMsgAndStatusCode(error);
+        res.status(statusCode).json(
+            failed_response(
+                statusCode,
+                "Failed to Verify Platform User Access",
+                {
+                    message
+                },
+                false
+            )
+        );
+    }
+}
+
+
 export {
     auth,
     getUserRole,
     verifyAdmin,
     verifySubAdmin,
-    verifyUserAccess
+    verifyUserAccess,
+    verifyAuthorizeUser,
+    restrictPlatformUserAccess
 };

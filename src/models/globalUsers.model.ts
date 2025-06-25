@@ -1,52 +1,54 @@
-import mongoose,{ Document, Model, Schema } from "mongoose";
+import mongoose, { Document, Model, Schema } from "mongoose";
+import { userRefs } from "../constants/modelRefs.js";
 
 
-export interface GlobalUserDocument extends Document {
-    userMongoId:mongoose.Schema.Types.ObjectId;
-    userRole:mongoose.Schema.Types.ObjectId;
-    name:string;
-    email:string;
-    isSignedUp : boolean;
-    designationRef:string;
-    createdAt:Date;
-    updatedAt:Date;
+export interface IGlobalUser extends Document {
+    _id: mongoose.Schema.Types.ObjectId;
+    userMongoId: mongoose.Schema.Types.ObjectId;
+    userRole: mongoose.Schema.Types.ObjectId;
+    name: string;
+    email: string;
+    isSignedUp: boolean;
+    designationRef: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
-const globalUserSchema = new Schema<GlobalUserDocument>({
-    userMongoId : {
+const globalUserSchema = new Schema<IGlobalUser>({
+    userMongoId: {
         type: mongoose.Schema.Types.ObjectId,
-        refPath : "designationRef",
-        required:true,
-        index:true
+        refPath: "designationRef",
+        required: true,
+        index: true
     },
-    userRole : {
+    userRole: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref : "user_role",
-        default : null
+        ref: "user_role",
+        default: null
     },
-    name : {
+    name: {
         type: String,
-        default : "",
+        default: "",
     },
-    email:{
-        type:String,
-        required:true,
-        unique : true,
-        index:true,
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true,
     },
-    isSignedUp:{
+    isSignedUp: {
         type: Boolean,
-        default : false
+        default: false
     },
     designationRef: {
-        type : String,
-        enum : ['Organizer','SubOrdinate','Admin','SubAdmin'],
-        required:true
+        type: String,
+        enum: userRefs,
+        required: true
     }
-},{timestamps : true});
+}, { timestamps: true });
 
 
-const GlobalUserModel : Model<GlobalUserDocument> = mongoose.model<GlobalUserDocument>("global_user",globalUserSchema);
+const GlobalUserModel: Model<IGlobalUser> = mongoose.model<IGlobalUser>("global_user", globalUserSchema);
 
 export default GlobalUserModel;

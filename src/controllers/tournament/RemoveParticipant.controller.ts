@@ -7,8 +7,8 @@ import _ from "lodash";
 import TournamentModel from "../../models/tournament.model.js";
 import { failed_response, success_response } from "../../utils/response.js";
 import catchErrorMsgAndStatusCode from "../../utils/catchError.js";
-import removeKnockoutTournamentParticipant from "../../service/tournament/knockout/removeParticipantKnockoutService.js";
-import removeDoubleKnockoutTournamentParticipant from "../../service/tournament/doubleKnockout/removeParticipantDoubleKnockoutService.js";
+import removeKnockoutTournamentParticipant from "../../service/tournament/knockout/removeParticipantKnockout.service.js";
+import removeDoubleKnockoutTournamentParticipant from "../../service/tournament/doubleKnockout/removeParticipantDoubleKnockout.service.js";
 import removeParticipantInRRTournament from "../../service/tournament/roundrobbin/removeParticipantRR.service.js";
 
 const removeParticipantFromTournament = catchAsync(async (req, res) => {

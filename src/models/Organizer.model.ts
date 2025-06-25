@@ -12,7 +12,8 @@ export interface locationDocument {
     country: string;
 }
 
-export interface OrganizerDocument extends Document {
+export interface IOrganizer extends Document {
+    _id: mongoose.Schema.Types.ObjectId
     customID: string;
     FirstName: string;
     LastName: string;
@@ -43,10 +44,10 @@ export interface OrganizerDocument extends Document {
     createdAt: Date;
     updatedAt: Date;
     comparePassword(val: string): Promise<boolean>;
-    omitPassword(): Omit<OrganizerDocument, "password">;
+    omitPassword(): Omit<IOrganizer, "password">;
 };
 
-const organizerSchema = new Schema<OrganizerDocument>({
+const organizerSchema = new Schema<IOrganizer>({
     customID: {
         type: String,
         required: true,
@@ -179,7 +180,7 @@ const organizerSchema = new Schema<OrganizerDocument>({
 //     }
 //   }
 // });
-organizerSchema.pre<OrganizerDocument>("save", async function (next) {
+organizerSchema.pre<IOrganizer>("save", async function (next) {
     console.log("user modified check : ", this.isModified("password"));
 
     // No need to assign 'this' to a local variable
@@ -213,6 +214,6 @@ organizerSchema.methods.omitPassword = function () {
     return user;
 }
 
-const organizerModel: Model<OrganizerDocument> = mongoose.model<OrganizerDocument>("Organizer", organizerSchema);
+const organizerModel: Model<IOrganizer> = mongoose.model<IOrganizer>("Organizer", organizerSchema);
 
 export default organizerModel;

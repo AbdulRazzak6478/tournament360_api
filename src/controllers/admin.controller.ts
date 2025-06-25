@@ -4,7 +4,7 @@ import catchAsync from "../utils/catchAsync.js";
 import catchErrorMsgAndStatusCode from "../utils/catchError.js";
 import { failed_response, success_response } from "../utils/response.js";
 import { createAdminSchema } from "../utils/yupValidations.js";
-import adminService from "../service/adminService.js";
+import adminService from "../service/admin.service.js";
 
 
 

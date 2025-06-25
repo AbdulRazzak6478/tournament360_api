@@ -5,10 +5,10 @@ import AppError from "../../utils/appError.js";
 import catchAsync from "../../utils/catchAsync.js";
 import _ from "lodash";
 import AppErrorCode from "../../constants/appErrorCode.js";
-import addParticipantInKnockoutFormatAndReArrangeTournament from "../../service/tournament/knockout/AddParticipantKnockoutService.js";
+import addParticipantInKnockoutFormatAndReArrangeTournament from "../../service/tournament/knockout/AddParticipantKnockout.service.js";
 import { failed_response, success_response } from "../../utils/response.js";
 import catchErrorMsgAndStatusCode from "../../utils/catchError.js";
-import addParticipantInDoubleKnockoutFormatAndReArrangeTournament from "../../service/tournament/doubleKnockout/addDoubleKnockoutParticipantService.js";
+import addParticipantInDoubleKnockoutFormatAndReArrangeTournament from "../../service/tournament/doubleKnockout/addDoubleKnockoutParticipant.service.js";
 import addParticipantInRRTournament from "../../service/tournament/roundrobbin/AddParticipantRR.service.js";
 
 const addParticipantIntoTournament = catchAsync(async (req, res) => {

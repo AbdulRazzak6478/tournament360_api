@@ -1,5 +1,5 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
-import { fixingTypeEnums } from './tournament.model.js';
+import { fixingTypeEnums, gameTypeRefs, participantRefs } from '../constants/modelRefs.js';
 
 export interface IKnockout extends Document {
     tournamentID: mongoose.Schema.Types.ObjectId;
@@ -33,11 +33,11 @@ const KnockoutSchema = new Schema<IKnockout>({
     fixingType: {
         type: String,
         enum: fixingTypeEnums,
-        required:true,
+        required: true,
     },
     gameType: {
         type: String,
-        enum: ['team', 'individual'],
+        enum: gameTypeRefs,
         required: true
     },
     totalRounds: {
@@ -67,13 +67,13 @@ const KnockoutSchema = new Schema<IKnockout>({
     ],
     players: [
         {
-            type: mongoose.Schema.Types.ObjectId,ref:"player", default: null
+            type: mongoose.Schema.Types.ObjectId, ref: "player", default: null
 
         }
     ],
     participantRef: {
         type: String,
-        enum : ['team','player']
+        enum: participantRefs
     }
 });
 

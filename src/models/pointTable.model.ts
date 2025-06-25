@@ -1,16 +1,18 @@
 import mongoose, { Document } from "mongoose";
+import { gameTypeRefs } from "../constants/modelRefs.js";
 
-interface IPointTable extends Document {
+export interface IPointTable extends Document {
+    _id: mongoose.Schema.Types.ObjectId;
     tournamentID: mongoose.Schema.Types.ObjectId;
     formatID: mongoose.Schema.Types.ObjectId;
     formatName?: string;
     gameType: "team" | "individual";
     participantID: mongoose.Schema.Types.ObjectId;
-    plays?: number;
-    wins?: number;
-    draws?: number;
-    losses?: number;
-    points?: number;
+    plays: number;
+    wins: number;
+    draws: number;
+    losses: number;
+    points: number;
     gameTypeRef: string;
 }
 
@@ -32,7 +34,7 @@ const pointTableSchema = new mongoose.Schema<IPointTable>(
         },
         gameType: {
             type: String,
-            enum: ["team", "individual"],
+            enum: gameTypeRefs,
             required: true,
         },
         participantID: {

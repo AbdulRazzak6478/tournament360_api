@@ -1,6 +1,6 @@
 import mongoose, { model, Schema } from "mongoose";
-import { fixingTypeEnums, formatNameEnums } from "./tournament.model.js";
 import { IMatch } from "./match.model.js";
+import { fixingTypeEnums, formatNames, formatRefs, gameTypeRefs, participantRefs } from "../constants/modelRefs.js";
 
 
 export interface IRound extends Document {
@@ -36,12 +36,12 @@ const roundSchema: Schema<IRound> = new Schema<IRound>({
     },
     formatRef: {
         type: String,
-        enum: ['knockout', 'doubleKnockout','RoundRobbin'],
+        enum: formatRefs,
         required: true
     },
     formatName: {
         type: String,
-        enum: formatNameEnums,
+        enum: formatNames,
         required: true
     },
     fixingType: {
@@ -51,7 +51,7 @@ const roundSchema: Schema<IRound> = new Schema<IRound>({
     },
     gameType: {
         type: String,
-        enum: ["team", "individual"],
+        enum: gameTypeRefs,
         required: true,
     },
     roundNumber: {
@@ -87,7 +87,7 @@ const roundSchema: Schema<IRound> = new Schema<IRound>({
     ],
     participantsRef: {
         type: String,
-        enum: ["team", "player"],
+        enum: participantRefs,
         required: true
     },
     isCompleted: {

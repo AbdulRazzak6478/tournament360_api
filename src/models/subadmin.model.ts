@@ -1,8 +1,8 @@
-import  bcrypt  from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import mongoose, { Schema, model, Document } from 'mongoose';
 import { Model } from 'mongoose';
 
-export interface SubAdminDocument extends Document {
+export interface ISubAdmin extends Document {
     name: string;
     password: string;
     email: string;
@@ -15,11 +15,11 @@ export interface SubAdminDocument extends Document {
     totalNoOfPasswordReset: number;
     passwordReset: boolean;
     comparePassword(val: string): Promise<boolean>;
-    omitPassword(): Omit<SubAdminDocument, "password">;
+    omitPassword(): Omit<ISubAdmin, "password">;
     createdAt: Date;
     updated: Date;
 }
-const subAdminSchema = new Schema<SubAdminDocument>({
+const subAdminSchema = new Schema<ISubAdmin>({
     name: { type: String, required: true },
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -27,14 +27,14 @@ const subAdminSchema = new Schema<SubAdminDocument>({
     userRole: { type: mongoose.Schema.Types.ObjectId, ref: 'user_role' },
     gender: { type: String, required: true },
     dob: { type: Date, required: true },
-    status: { type: String, default : 'ACTIVE',enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'] },
+    status: { type: String, default: 'ACTIVE', enum: ['ACTIVE', 'INACTIVE', 'SUSPENDED'] },
     mobileNumber: { type: String, required: true },
     totalNoOfPasswordReset: { type: Number, default: 0 },
     passwordReset: { type: Boolean, default: false },
-},{timestamps: true});
+}, { timestamps: true });
 
 
-subAdminSchema.pre<SubAdminDocument>("save", async function (next) {
+subAdminSchema.pre<ISubAdmin>("save", async function (next) {
     console.log("user modified check : ", this.isModified("password"));
 
     // No need to assign 'this' to a local variable
@@ -68,6 +68,6 @@ subAdminSchema.methods.omitPassword = function () {
     return user;
 }
 
-const SubAdminModel: Model<SubAdminDocument> = model<SubAdminDocument>('SubAdmin', subAdminSchema);
+const SubAdminModel: Model<ISubAdmin> = model<ISubAdmin>('SubAdmin', subAdminSchema);
 
 export default SubAdminModel;

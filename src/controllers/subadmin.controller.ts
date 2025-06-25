@@ -4,7 +4,7 @@ import catchErrorMsgAndStatusCode from "../utils/catchError.js";
 import { failed_response, success_response } from "../utils/response.js";
 import statusCodes from "../constants/statusCodes.js";
 import { createSubAdminSchema } from "../utils/yupValidations.js";
-import subAdminService from "../service/subAdminService.js";
+import subAdminService from "../service/subAdmin.service.js";
 
 
 
