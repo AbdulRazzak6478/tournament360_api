@@ -1,6 +1,6 @@
 import mongoose, { Document } from "mongoose";
-import { thirtyDaysFromNow } from "../utils/dateHandlers.js";
-import { userRefs } from "../constants/modelRefs.js";
+import { thirtyDaysFromNow } from "../utils/date-handlers.util.js";
+import { userRefs } from "../constants/model-refs.constant.js";
 
 export interface ISession extends Document {
     _id: mongoose.Schema.Types.ObjectId,
@@ -16,7 +16,7 @@ const sessionSchema = new mongoose.Schema<ISession>({
     userAgent: { type: String, default: "" },
     createdAt: { type: Date, default: new Date() },
     expiresAt: { type: Date, default: thirtyDaysFromNow() },
-    userRef: { type: String, enum : userRefs }
+    userRef: { type: String, enum: userRefs }
     // expiresAt: { type: Date, default: null }
 });
 

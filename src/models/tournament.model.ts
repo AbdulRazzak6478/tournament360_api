@@ -1,5 +1,5 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
-import { fixingTypeEnums, formatNames, gameTypeRefs, scoreTypeEnums } from '../constants/modelRefs.js';
+import { fixingTypeEnums, formatNames, gameTypeRefs, scoreTypeEnums, userRefs } from '../constants/model-refs.constant.js';
 export interface ITournament extends Document {
     tournamentID: string;
     formatID: mongoose.Schema.Types.ObjectId;
@@ -52,7 +52,8 @@ const TournamentSchema = new Schema<ITournament>({
     },
     createdByRef: {
         type: String,
-        default: '',
+        required: true,
+        enum: userRefs,
     },
     sportID: {
         type: mongoose.Schema.Types.ObjectId,

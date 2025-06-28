@@ -1,5 +1,5 @@
 import mongoose, { Document, Model } from "mongoose";
-import { enums } from "../constants/verificationCode.js";
+import { enums } from "../constants/verification-codes.constant.js";
 
 
 
@@ -9,7 +9,7 @@ export interface OTPReferenceDocument extends Document {
     otp_reference: string;
     otp_number: number;
     expiresIn: Date;
-    isVerified:boolean;
+    isVerified: boolean;
     createdAt: Date;
     updated: Date;
 }
@@ -18,7 +18,7 @@ const OTPReferenceSchema = new mongoose.Schema<OTPReferenceDocument>({
     type: {
         type: String,
         required: true,
-        enum : enums
+        enum: enums
     },
     email: {
         type: String,
@@ -36,9 +36,9 @@ const OTPReferenceSchema = new mongoose.Schema<OTPReferenceDocument>({
         type: Date,
         required: true
     },
-    isVerified:{
+    isVerified: {
         type: Boolean,
-        default:false
+        default: false
     }
 }, { timestamps: true });
 

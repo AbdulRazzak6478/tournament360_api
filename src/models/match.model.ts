@@ -1,5 +1,5 @@
 import mongoose, { model, Schema } from "mongoose";
-import { scoreTypeEnums } from "../constants/modelRefs.js";
+import { scoreTypeEnums } from "../constants/model-refs.constant.js";
 
 
 export interface IMatch extends Document {
@@ -55,12 +55,12 @@ const matchSchema: Schema<IMatch> = new Schema<IMatch>({
     participantA: {
         type: mongoose.Schema.Types.ObjectId,
         refPath: "gameTypeRef",
-        default:null
+        default: null
     },
     participantB: {
         type: mongoose.Schema.Types.ObjectId,
         refPath: "gameTypeRef",
-        default:null
+        default: null
     },
     gameType: {
         type: String,

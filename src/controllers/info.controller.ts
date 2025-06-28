@@ -1,5 +1,5 @@
-import statusCodes from "../constants/statusCodes.js";
-import catchAsync from "../utils/catchAsync.js";
+import statusCodes from "../constants/status-codes.constant.js";
+import catchAsync from "../utils/catch-async.util.js";
 
 const info = {
     name: 'Tournament360',
@@ -9,10 +9,10 @@ const info = {
     license: 'MIT'
 };
 const payload = {
-    code : 200,
-    message : "Server is started",
-    response : info,
-    status : true
+    code: 200,
+    message: "Server is started",
+    response: info,
+    status: true
 }
 
 

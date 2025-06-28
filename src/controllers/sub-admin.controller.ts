@@ -1,27 +1,25 @@
 import { ValidationError } from "yup";
-import statusCodes from "../constants/status-codes.constant.js";
 import catchAsync from "../utils/catch-async.util.js";
 import catchErrorMsgAndStatusCode from "../utils/catch-error.util.js";
 import { failed_response, success_response } from "../utils/response.util.js";
-import { createAdminSchema } from "../utils/yup-validations.util.js";
-import adminService from "../services/admin.service.js";
+import statusCodes from "../constants/status-codes.constant.js";
+import { createSubAdminSchema } from "../utils/yup-validations.util.js";
+import subAdminService from "../services/subadmin.service.js";
 
 
 
-
-
-const createAdmin = catchAsync(async (req, res) => {
+const createSuAdmin = catchAsync(async (req, res) => {
     try {
-        // 1. validate sub ordinate data , request data
+        // 1. validate sub admin data , request data
         try {
-            await createAdminSchema.validate(
+            await createSubAdminSchema.validate(
                 { ...req.body },
                 { abortEarly: false }
             );
         } catch (error) {
             if (error instanceof ValidationError) {
                 console.log(
-                    "Yup validation error in create admin  : ",
+                    "Yup validation error in add sub admin  : ",
                     error?.message
                 );
                 return res
@@ -36,30 +34,36 @@ const createAdmin = catchAsync(async (req, res) => {
                     );
             }
         }
-        // 2. form a payload and call admin service
-        const { name, password, email } = req.body;
+
+        // 2. make a payload for subordinate
+        const { name, email, password, designation, gender, dob, mobileNumber, permissions } = req.body;
         const payload = {
             name,
+            email,
             password,
-            email
+            designation,
+            gender,
+            dob,
+            mobileNumber,
+            permissions
         }
-        const response = await adminService.createAdminAccount(payload)
-        // 3. return response
+        // 3. call the create subordinate service
+        const response = await subAdminService.createSubAdminAccount(payload);
+        // 4. return the created subordinate payload
         return res.status(statusCodes.CREATED).json(
             success_response(
                 statusCodes.CREATED,
-                "admin is created successfully.",
+                "sub Admin is created successfully.",
                 response,
                 true
             )
         );
     } catch (error) {
         const { statusCode, message } = catchErrorMsgAndStatusCode(error);
-        console.log("Error in create admin account controller : ", message);
         return res.status(statusCode).json(
             failed_response(
                 statusCode,
-                "failed to create admin",
+                "failed to create sub admin",
                 { message },
                 false
             )
@@ -67,8 +71,8 @@ const createAdmin = catchAsync(async (req, res) => {
     }
 });
 
-const adminController = {
-    createAdmin
+const subAdminController = {
+    createSuAdmin
 }
 
-export default adminController;
+export default subAdminController;

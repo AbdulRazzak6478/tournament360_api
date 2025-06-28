@@ -1,6 +1,6 @@
 import mongoose, { model, Schema } from "mongoose";
 import { IMatch } from "./match.model.js";
-import { fixingTypeEnums, formatNames, formatRefs, gameTypeRefs, participantRefs } from "../constants/modelRefs.js";
+import { fixingTypeEnums, formatNames, formatRefs, gameTypeRefs, participantRefs } from "../constants/model-refs.constant.js";
 
 
 export interface IRound extends Document {

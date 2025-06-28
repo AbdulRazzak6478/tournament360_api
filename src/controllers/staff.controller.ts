@@ -1,27 +1,39 @@
 import { ValidationError } from "yup";
-import statusCodes from "../constants/status-codes.constant.js";
 import catchAsync from "../utils/catch-async.util.js";
 import catchErrorMsgAndStatusCode from "../utils/catch-error.util.js";
 import { failed_response, success_response } from "../utils/response.util.js";
-import { createAdminSchema } from "../utils/yup-validations.util.js";
-import adminService from "../services/admin.service.js";
+import statusCodes from "../constants/status-codes.constant.js";
+import { createSubordinateSchema } from "../utils/yup-validations.util.js";
+import mongoose from "mongoose";
+import staffService from "../services/staff.service.js";
 
 
 
-
-
-const createAdmin = catchAsync(async (req, res) => {
+const createStaff = catchAsync(async (req, res) => {
+    const { organizerId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(organizerId)) {
+        return res
+            .status(statusCodes.BAD_REQUEST)
+            .json(
+                failed_response(
+                    statusCodes.BAD_REQUEST,
+                    "Invalid organizerId",
+                    { message: "organizerId must be a valid MongoDB ObjectId" },
+                    false
+                )
+            );
+    }
     try {
         // 1. validate sub ordinate data , request data
         try {
-            await createAdminSchema.validate(
-                { ...req.body },
+            await createSubordinateSchema.validate(
+                { ...req.body, userAgent: req.headers["user-agent"] },
                 { abortEarly: false }
             );
         } catch (error) {
             if (error instanceof ValidationError) {
                 console.log(
-                    "Yup validation error in create admin  : ",
+                    "Yup validation error in add organizer subordinate  : ",
                     error?.message
                 );
                 return res
@@ -36,30 +48,35 @@ const createAdmin = catchAsync(async (req, res) => {
                     );
             }
         }
-        // 2. form a payload and call admin service
-        const { name, password, email } = req.body;
+
+        // 2. make a payload for subordinate
+        const { name, email, password, designation, gender, dob, mobileNumber } = req.body;
         const payload = {
             name,
+            email,
             password,
-            email
+            designation,
+            gender,
+            dob,
+            mobileNumber
         }
-        const response = await adminService.createAdminAccount(payload)
-        // 3. return response
+        // 3. call the create subordinate service
+        const response = await staffService.createStaffService(organizerId, payload);
+        // 4. return the created subordinate payload
         return res.status(statusCodes.CREATED).json(
             success_response(
                 statusCodes.CREATED,
-                "admin is created successfully.",
+                "Staff Created Successfully.",
                 response,
                 true
             )
         );
     } catch (error) {
         const { statusCode, message } = catchErrorMsgAndStatusCode(error);
-        console.log("Error in create admin account controller : ", message);
         return res.status(statusCode).json(
             failed_response(
                 statusCode,
-                "failed to create admin",
+                "failed to create Staff",
                 { message },
                 false
             )
@@ -67,8 +84,8 @@ const createAdmin = catchAsync(async (req, res) => {
     }
 });
 
-const adminController = {
-    createAdmin
+const staffController = {
+    createStaff
 }
 
-export default adminController;
+export default staffController;

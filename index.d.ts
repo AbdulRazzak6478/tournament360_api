@@ -1,7 +1,7 @@
 // index.d.ts (at the root of your project)
 import * as express from "express";
-import { IGlobalUser } from "./src/models/globalUsers.model.js";
-import { userRoleDocument } from "./src/models/userRole.model.js";
+import { IGlobalUser } from "./src/models/global-users.model.js";
+import { userRoleDocument } from "./src/models/user-role.model.js";
 import mongoose from "mongoose";
 
 // declare module "express-serve-static-core" {

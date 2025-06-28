@@ -1,7 +1,7 @@
 import { ValidationError } from "yup";
-import statusCodes from "../constants/statusCodes.js";
-import catchAsync from "../utils/catchAsync.js";
-import { failed_response, success_response } from "../utils/response.js";
+import statusCodes from "../constants/status-codes.constant.js";
+import catchAsync from "../utils/catch-async.util.js";
+import { failed_response, success_response } from "../utils/response.util.js";
 import {
     addContactDetailsSchema,
     addLocationDetailsSchema,
@@ -11,13 +11,13 @@ import {
     emailValidate,
     loginSchema,
     resetPasswordSchema,
-} from "../utils/yupValidations.js";
-import registerService from "../service/register.service.js";
-import catchErrorMsgAndStatusCode from "../utils/catchError.js";
-import { clearAuthCookies, setAuthCookies } from "../utils/cookies.js";
+} from "../utils/yup-validations.util.js";
+import registerService from "../services/register.service.js";
+import catchErrorMsgAndStatusCode from "../utils/catch-error.util.js";
+import { clearAuthCookies, setAuthCookies } from "../utils/cookies.util.js";
 import sessionModel from "../models/session.model.js";
-import { verifyToken } from "../utils/jwt.js";
-import appErrorAssert from "../utils/appAssert.js";
+import { verifyToken } from "../utils/jwt.util.js";
+import appErrorAssert from "../utils/app-assert.util.js";
 
 const sentOtpToVerifyEmail = catchAsync(async (req, res) => {
     try {

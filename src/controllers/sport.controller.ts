@@ -1,9 +1,9 @@
-import statusCodes from "../constants/statusCodes.js";
+import statusCodes from "../constants/status-codes.constant.js";
 import Sport from "../models/sport.model.js";
-import AppError from "../utils/appError.js";
-import catchAsync from "../utils/catchAsync.js";
-import catchErrorMsgAndStatusCode from "../utils/catchError.js";
-import { failed_response, success_response } from "../utils/response.js";
+import AppError from "../utils/app-error.util.js";
+import catchAsync from "../utils/catch-async.util.js";
+import catchErrorMsgAndStatusCode from "../utils/catch-error.util.js";
+import { failed_response, success_response } from "../utils/response.util.js";
 import _ from "lodash";
 
 const createSport = catchAsync(async (req, res) => {
@@ -16,7 +16,7 @@ const createSport = catchAsync(async (req, res) => {
         }
         // 2. check this sport is already exist or not
         const sports = await Sport.find({}, { name: 1, sportID: 1 }).lean();
-        console.log("sports : ",sports);
+        console.log("sports : ", sports);
         const isSportExist = sports?.filter((sport) => sport?.name?.toLowerCase() === sportName?.toLowerCase());
         if (!_.isEmpty(isSportExist)) {
             throw new AppError(statusCodes.BAD_REQUEST, "Sport Already Added!");
