@@ -226,8 +226,10 @@ const fetchParticipant = catchAsync(async (req, res) => {
 
 
 
-export {
+const participantController = {
     getTournamentParticipants,
     updateParticipantName,
     fetchParticipant,
 }
+
+export default participantController;

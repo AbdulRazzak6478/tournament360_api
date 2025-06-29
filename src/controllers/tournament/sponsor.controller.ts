@@ -337,10 +337,12 @@ const removeTournamentSponsor = catchAsync(async (req, res) => {
 });
 
 
-export {
+const sponsorController = {
     addSponsorIntoTournament,
     fetchTournamentSponsors,
     fetchSpecificTournamentSponsor,
     editSpecificTournamentSponsor,
     removeTournamentSponsor
 }
+
+export default sponsorController;

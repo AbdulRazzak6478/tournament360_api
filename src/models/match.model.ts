@@ -30,6 +30,7 @@ export interface IMatch extends Document {
     status: string;
     isCompleted: boolean;
     refereeID: mongoose.Schema.Types.ObjectId;
+    venueID: mongoose.Schema.Types.ObjectId;
     sportRef: string;
     sportRefID: mongoose.Schema.Types.ObjectId;
     createdAt: Date;
@@ -150,6 +151,11 @@ const matchSchema: Schema<IMatch> = new Schema<IMatch>({
         default: null
     },
     refereeID: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'referee',
+        default: null
+    },
+    venueID: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'referee',
         default: null

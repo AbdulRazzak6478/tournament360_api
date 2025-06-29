@@ -52,6 +52,14 @@ const TOURNAMENT_PERMISSIONS = {
         VIEW: 'VIEW'
     },
 
+    // REFEREE
+    REFEREE: {
+        ADD: 'ADD',
+        EDIT: 'EDIT',
+        DELETE: 'DELETE',
+        VIEW: 'VIEW'
+    },
+
     // PARTICIPANT
     PARTICIPANT: {
 

@@ -303,10 +303,12 @@ const removeTournamentReferee = catchAsync(async (req, res) => {
 });
 
 
-export {
+const refereeController = {
     addRefereeIntoTournament,
     fetchTournamentReferees,
     fetchSpecificTournamentReferees,
     editSpecificTournamentReferee,
     removeTournamentReferee
 }
+
+export default refereeController;

@@ -1,15 +1,15 @@
 import mongoose from "mongoose";
-import catchAsync from "../../utils/catch-async.util.js";
-import catchErrorMsgAndStatusCode from "../../utils/catch-error.util.js";
-import { failed_response, success_response } from "../../utils/response.util.js";
-import AppError from "../../utils/app-error.util.js";
-import statusCodes from "../../constants/status-codes.constant.js";
-import AppErrorCode from "../../constants/app-error-codes.constant.js";
+import catchAsync from "../../../utils/catch-async.util.js";
+import catchErrorMsgAndStatusCode from "../../../utils/catch-error.util.js";
+import { failed_response, success_response } from "../../../utils/response.util.js";
+import AppError from "../../../utils/app-error.util.js";
+import statusCodes from "../../../constants/status-codes.constant.js";
+import AppErrorCode from "../../../constants/app-error-codes.constant.js";
 import _ from "lodash";
-import TournamentModel from "../../models/tournament.model.js";
-import updateWinnerInKnockoutTournament from "../../services/tournament/knockout/update-knockout-match-winner.service.js";
-import updateWinnerForDoubleKnockoutBrackets from "../../services/tournament/double-knockout/update-double-match-winner.service.js";
-import AnnounceRoundRobbinMatchWinner from "../../services/tournament/round-robbin/updateRRMatchWinner.service.js";
+import TournamentModel from "../../../models/tournament.model.js";
+import updateWinnerInKnockoutTournament from "../../../services/tournament/knockout/update-knockout-match-winner.service.js";
+import updateWinnerForDoubleKnockoutBrackets from "../../../services/tournament/double-knockout/update-double-match-winner.service.js";
+import AnnounceRoundRobbinMatchWinner from "../../../services/tournament/round-robbin/updateRRMatchWinner.service.js";
 
 
 

@@ -311,10 +311,12 @@ const removeTournamentVenue = catchAsync(async (req, res) => {
 });
 
 
-export {
+const venueController = {
     addVenueIntoTournament,
     fetchTournamentVenues,
     fetchSpecificTournamentVenue,
     editSpecificTournamentVenue,
     removeTournamentVenue
 }
+
+export default venueController;

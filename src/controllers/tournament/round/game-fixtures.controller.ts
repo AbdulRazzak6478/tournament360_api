@@ -1,11 +1,11 @@
-import AppErrorCode from "../../constants/app-error-codes.constant.js";
-import statusCodes from "../../constants/status-codes.constant.js";
-import TournamentModel from "../../models/tournament.model.js";
-import getKnockoutFixturesService from "../../services/game-fixtures.service.js";
-import AppError from "../../utils/app-error.util.js";
-import catchAsync from "../../utils/catch-async.util.js";
-import catchErrorMsgAndStatusCode from "../../utils/catch-error.util.js";
-import { failed_response, success_response } from "../../utils/response.util.js";
+import AppErrorCode from "../../../constants/app-error-codes.constant.js";
+import statusCodes from "../../../constants/status-codes.constant.js";
+import TournamentModel from "../../../models/tournament.model.js";
+import getKnockoutFixturesService from "../../../services/game-fixtures.service.js";
+import AppError from "../../../utils/app-error.util.js";
+import catchAsync from "../../../utils/catch-async.util.js";
+import catchErrorMsgAndStatusCode from "../../../utils/catch-error.util.js";
+import { failed_response, success_response } from "../../../utils/response.util.js";
 import _ from "lodash";
 
 

@@ -47,17 +47,21 @@ const getKnockoutFixturesService = async (data: dataType) => {
                     dateOfPlay: Date | null,
                     status: string,
                     isCompleted: boolean,
-                    gameTypeRef: string
+                    gameTypeRef: string,
+                    refereeID:populateType,
+                    venueID:populateType
                 }[]
             }>([
                 {
                     path: "matches",
-                    select: "_id name participantA participantB matchA matchB winner timing dateOfPlay status isCompleted gameTypeRef",
+                    select: "_id name participantA participantB matchA matchB winner timing dateOfPlay status isCompleted gameTypeRef refereeID venueID",
                     populate: [
                         { path: "participantA", select: "_id name" },
                         { path: "participantB", select: "_id name" },
                         { path: "matchA", select: "_id name" },
                         { path: "matchB", select: "_id name" },
+                        { path: "refereeID", select: "_id name" },
+                        { path: "venueID", select: "_id name" },
                     ]
                 },
             ])
@@ -88,6 +92,8 @@ const getKnockoutFixturesService = async (data: dataType) => {
                     participantB,
                     winnerId: match?.winner,
                     winner,
+                    referee:match?.refereeID?.name,
+                    venue: match?.venueID?.name
                 };
             });
             // console.log("round : ", round);
